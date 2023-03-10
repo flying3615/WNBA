@@ -69,7 +69,7 @@ async function selectStadiumPassOption() {
     await nextBtn1.click();
 }
 
-async function selectPlayers() {
+async function selectPartners() {
     const partnerInput = await page.waitForSelector(partnersInputSelector);
     await partnerInput.type('Ivan Shi');
 
@@ -108,14 +108,14 @@ async function closeModals() {
 
 async function bookIt(orderedCourt) {
 
-    console.log(`booking ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
+    console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
 
     for (const slot of orderedCourt.peakTimeSlots) {
         // peak time booking
         await slot.click();
 
         await selectStadiumPassOption();
-        await selectPlayers();
+        await selectPartners();
         await acceptConditionAndConfirmBooking();
         await closeModals();
     }
@@ -125,7 +125,7 @@ async function bookIt(orderedCourt) {
     await orderedCourt.endOffPeakSlot.click();
 
     await selectStadiumPassOption();
-    await selectPlayers();
+    await selectPartners();
     await acceptConditionAndConfirmBooking();
     await closeModals();
 }
