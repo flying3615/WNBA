@@ -14,8 +14,8 @@ const bookingSlotPeopleSelector = "booking-grid-slot-people";
 
 const year = 2023
 
-// Weekdays: 16:00-22:00
-// Weekends: 09:00-18:00
+// Weekdays: 16:00-22:00, +1, after 21:00
+// Weekends: 09:00-18:00, +2, after 16:00
 
 let browser, context, page, dateObj
 
@@ -31,10 +31,10 @@ const login = async () => {
 
     // 填写登录表单并提交
     const usernameInput = await page.$('input[name=username]');
-    await usernameInput.type('bla');
+    await usernameInput.type('kafofe8345@rolenot.com');
 
     const passwordInput = await page.$('input[name=password]');
-    await passwordInput.type('bla');
+    await passwordInput.type('');
 
     const submitButton = await page.$('button[type=submit]');
     await submitButton.click();
@@ -48,12 +48,24 @@ const login = async () => {
 
 const getDate = async () => {
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    dateObj = new Date(`${bookingDate} ${year}`);
+    console.log("booking Date = ",bookingDate)
+    const date = new Date(`${bookingDate} ${year}`);
+    dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-const isWeekend = async () => {
+const isWeekend = () => {
     const dayOfWeek = dateObj.getDay();
     return dayOfWeek === 6 || dayOfWeek === 0;
+}
+
+const isSuitableTime = (currentSlotTime) => {
+    const hour = parseInt(currentSlotTime.split(":")[0]);
+    if (isWeekend() && hour >= 16) {
+        //after 16:00
+        return true;
+    }
+    return !isWeekend() && hour >= 21;
+
 }
 
 const extractTime = (str) => {
@@ -92,9 +104,8 @@ const calculatePlus30MinutesTime = (inputTime) => {
 const checkAndBookSlots = async () => {
     // Wait for the network to finish loading
     await page.waitForTimeout(3000);
+    // init dateObj
     await getDate();
-    console.log(dateObj, "is weekend? " + await isWeekend());
-
     const bookingGrid = await page.waitForSelector(bookingGridSelector);
 
     const courts = await bookingGrid.$$(">div")
@@ -115,7 +126,9 @@ const checkAndBookSlots = async () => {
                 startTime = "";
             } else {
                 const currentSlotTime = extractTime((await slot.textContent()).trim()); // output like: "16:00"
-                if (currentSlotTime) {
+                // Weekdays: 16:00-22:00, +1, after 21:00
+                // Weekends: 09:00-18:00, +2, after 16:00
+                if (currentSlotTime && isSuitableTime(currentSlotTime)) {
                     if (startTime === "") {
                         startTime = currentSlotTime
                     }
@@ -134,8 +147,8 @@ const checkAndBookSlots = async () => {
             console.log(`=====court ${++index} is fully booked!==========`)
         } else {
             console.log(`=====court ${++index} max play time ${maxTimePerCourt} minutes, from ${startTime === "" ? "now" : startTime} to ${endTime}==========`)
-
         }
+        //TODO find the max play time, and book it
     }
 
     return false;
@@ -163,7 +176,7 @@ const logout = async () => {
         if (await login()) {
             console.log('Logged in successfully!');
 
-            for (let i = 1; i <= 3; i++) {
+            for (let i = 1; i <= 8; i++) {
                 const hasBooked = await checkAndBookSlots()
                 if (!hasBooked) {
                     await goToNextDay();
