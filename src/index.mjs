@@ -1,18 +1,26 @@
-const {chromium} = require('playwright');
-
-const bookingButtonSelector = "body > ui-view > app-route > div > main > home-route > div > div > cards > div > card:nth-child(2) > div > card-home-welcome > section > div.HomeActionButtons > div:nth-child(2) > action-button > a";
-const nextDayButton = "body > ui-view > app-route > div > main > ui-view > booking-view-route > div > div.Container.Container--flex.NumAreas--6 > cards > div > card > div > booking-grid-header > header > booking-grid-nav > h1 > button:nth-child(3)";
-const dateSelector = "body > ui-view > app-route > div > main > ui-view > booking-view-route > div > div.Container.Container--flex.NumAreas--6 > cards > div > card > div > booking-grid-header > header > booking-grid-nav > h1 > span > span.BookingGridNav-month.BookingGridNav-month--full.ng-binding";
-
-const profileIcon = "body > ui-view > app-route > div > app-header > header > nav > a.UserMenu-toggle.NavBar-item.ng-scope";
-const signOutButton = "body > ui-view > app-route > div > app-header > header > div > div.UserMenu-options > button";
-
-const bookingGridSelector = "body > ui-view > app-route > div > main > ui-view > booking-view-route > div > div.Container.Container--flex.NumAreas--6 > cards > div > card > div > booking-grid > div";
-const bookingSlotAvailableSelector = "booking-grid-slot";
-const bookingSlotEventSelector = "booking-grid-slot-event";
-const bookingSlotPeopleSelector = "booking-grid-slot-people";
-
-const year = 2023
+import {chromium} from "playwright";
+import _ from 'lodash';
+import {
+    bookingButtonSelector,
+    bookingGridSelector,
+    chooseStadiumPassNextBtnSelector,
+    bookingSlotAvailableSelector,
+    bookingSlotEventSelector,
+    bookingSlotPeopleSelector,
+    dateSelector,
+    nextDayButton,
+    partnerOptionSelector,
+    partnersInputSelector,
+    profileIcon,
+    signOutButton,
+    stadiumPassRadioSelector,
+    year,
+    selectedPartnerNextBtnSelector,
+    bookingConditionCheckBox1,
+    bookingConditionCheckBox2,
+    confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector, userName, password
+} from "./constant.mjs";
+import {calculatePlus30MinutesTime, extractTime, isSuitableTime} from "./util.mjs";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
@@ -20,7 +28,6 @@ const year = 2023
 let browser, context, page, dateObj
 
 const login = async () => {
-
     browser = await chromium.launch({headless: false});
     context = await browser.newContext();
     page = await context.newPage();
@@ -31,10 +38,10 @@ const login = async () => {
 
     // 填写登录表单并提交
     const usernameInput = await page.$('input[name=username]');
-    await usernameInput.type('kafofe8345@rolenot.com');
+    await usernameInput.type(userName);
 
     const passwordInput = await page.$('input[name=password]');
-    await passwordInput.type('');
+    await passwordInput.type(password);
 
     const submitButton = await page.$('button[type=submit]');
     await submitButton.click();
@@ -48,57 +55,59 @@ const login = async () => {
 
 const getDate = async () => {
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    console.log("booking Date = ",bookingDate)
+    console.log("booking Date = ", bookingDate)
     const date = new Date(`${bookingDate} ${year}`);
     dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-const isWeekend = () => {
-    const dayOfWeek = dateObj.getDay();
-    return dayOfWeek === 6 || dayOfWeek === 0;
-}
+async function bookIt(orderedCourt) {
 
-const isSuitableTime = (currentSlotTime) => {
-    const hour = parseInt(currentSlotTime.split(":")[0]);
-    if (isWeekend() && hour >= 16) {
-        //after 16:00
-        return true;
-    }
-    return !isWeekend() && hour >= 21;
+    console.log(`booking ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
 
-}
+    await orderedCourt.startSlot.click();
+    await orderedCourt.endSlot.click();
 
-const extractTime = (str) => {
-    const pattern = /\b\d{2}:\d{2}\b/;
-    const match = str.match(pattern);
-    if (match) {
-        return match[0];
-    } else {
-        new Error("wrong time format")
-    }
-}
+    // choose stadium pass option
+    const stadiumPassOption = await page.waitForSelector(stadiumPassRadioSelector);
+    await stadiumPassOption.click();
 
-const calculatePlus30MinutesTime = (inputTime) => {
-    const inputMinutes = 30;
-    const isoDate = dateObj.toISOString().slice(0, 10);
-    const dateTime = new Date(`${isoDate}T${inputTime}:00`);
+    // go to next step
+    const nextBtn1 = await page.waitForSelector(chooseStadiumPassNextBtnSelector);
+    await nextBtn1.click();
 
-// Extract hours and minutes from the Date object
-    let hours = dateTime.getHours();
-    let minutes = dateTime.getMinutes();
+    // select multiple players
+    const partnerInput = await page.waitForSelector(partnersInputSelector);
+    await partnerInput.type('Ivan Shi');
 
-// Add inputMinutes to the minutes
-    minutes += inputMinutes;
+    const partner = await page.waitForSelector(partnerOptionSelector)
+    await partner.click();
 
-// Handle case where minutes >= 60
-    if (minutes >= 60) {
-        hours += 1;
-        minutes %= 60;
+    // go to next step
+    const nextBtn2 = await page.waitForSelector(selectedPartnerNextBtnSelector);
+    await nextBtn2.click();
+
+    // accept 2 conditions
+    const conditionCheckbox1 = await page.waitForSelector(bookingConditionCheckBox1)
+    await conditionCheckbox1.click();
+
+    try {
+        // sometime not show???
+        const conditionCheckbox2 = await page.waitForSelector(bookingConditionCheckBox2, { timeout: 3000 })
+        await conditionCheckbox2.click();
+    } catch (e) {
+        console.error("condition2 not show up")
     }
 
-// Format the hours and minutes as a string
-    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+    // confirm booking
+    const confirmBookingBtn = await page.waitForSelector(confirmBookingBtnSelector);
+    await confirmBookingBtn.click();
 
+    //booking successfully, close modal
+    const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
+    await closeModalBtn.click();
+
+    const finalCloseModalBtn = await page.waitForSelector(finalCloseBookingModalBtnSelector)
+    await finalCloseModalBtn.click();
 }
 
 const checkAndBookSlots = async () => {
@@ -111,11 +120,14 @@ const checkAndBookSlots = async () => {
     const courts = await bookingGrid.$$(">div")
     let index = 0
 
+    const courtsToTime = [];
+
     for (const court of courts) {
         let maxTimePerCourt = 0;
         let currentTime = 0
         let startTime = "";
         let endTime = "";
+        let startSlot, endSlot;
         const slotsPerCourt = await court.$$(`>${bookingSlotAvailableSelector}`)
 
         for (const slot of slotsPerCourt) {
@@ -124,31 +136,45 @@ const checkAndBookSlots = async () => {
             if (peopleBookedSlot || eventBookedSlot) {
                 currentTime = 0;
                 startTime = "";
+                startSlot = null;
             } else {
                 const currentSlotTime = extractTime((await slot.textContent()).trim()); // output like: "16:00"
                 // Weekdays: 16:00-22:00, +1, after 21:00
                 // Weekends: 09:00-18:00, +2, after 16:00
-                if (currentSlotTime && isSuitableTime(currentSlotTime)) {
+                if (currentSlotTime && isSuitableTime(currentSlotTime, dateObj)) {
                     if (startTime === "") {
                         startTime = currentSlotTime
+                        startSlot = slot;
                     }
                     // 1 slot is 30 minutes
                     currentTime += 30;
                     if (currentTime > maxTimePerCourt) {
                         maxTimePerCourt = currentTime;
                     }
-                    endTime = calculatePlus30MinutesTime(currentSlotTime);
+                    endTime = calculatePlus30MinutesTime(currentSlotTime, dateObj);
+                    endSlot = slot;
                 }
-
             }
         }
 
-        if(maxTimePerCourt===0) {
+        if (maxTimePerCourt === 0) {
             console.log(`=====court ${++index} is fully booked!==========`)
         } else {
             console.log(`=====court ${++index} max play time ${maxTimePerCourt} minutes, from ${startTime === "" ? "now" : startTime} to ${endTime}==========`)
+            //TODO, check if it starts from peak time....
+            courtsToTime.push({court: index, time: maxTimePerCourt, startTime, endTime, startSlot, endSlot})
         }
-        //TODO find the max play time, and book it
+    }
+
+    // sort courts by time per day
+    if (courtsToTime.length > 0) {
+        const mostSuitableCourt = _.orderBy(courtsToTime, ['time'], ['desc'])[0]
+        // only book the court where can play more than 2 hours
+        if(mostSuitableCourt.time >= 120) {
+            await bookIt(mostSuitableCourt)
+        } else {
+            console.log("There is no suitable court on this day, skip it....")
+        }
     }
 
     return false;
