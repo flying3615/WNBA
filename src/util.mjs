@@ -44,3 +44,8 @@ export const isSuitableTime = (currentSlotTime, dateObj) => {
     }
     return !isWeekend(dateObj) && hour >= 21;
 }
+
+export const isPeakTime = (currentSlotTime, dateObj) => {
+    const hour = parseInt(currentSlotTime.split(":")[0]);
+    return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21
+}

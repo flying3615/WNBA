@@ -20,7 +20,7 @@ import {
     bookingConditionCheckBox2,
     confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector, userName, password
 } from "./constant.mjs";
-import {calculatePlus30MinutesTime, extractTime, isSuitableTime} from "./util.mjs";
+import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime} from "./util.mjs";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
@@ -60,22 +60,16 @@ const getDate = async () => {
     dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-async function bookIt(orderedCourt) {
-
-    console.log(`booking ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
-
-    await orderedCourt.startSlot.click();
-    await orderedCourt.endSlot.click();
-
-    // choose stadium pass option
+async function selectStadiumPassOption() {
     const stadiumPassOption = await page.waitForSelector(stadiumPassRadioSelector);
     await stadiumPassOption.click();
 
     // go to next step
     const nextBtn1 = await page.waitForSelector(chooseStadiumPassNextBtnSelector);
     await nextBtn1.click();
+}
 
-    // select multiple players
+async function selectPlayers() {
     const partnerInput = await page.waitForSelector(partnersInputSelector);
     await partnerInput.type('Ivan Shi');
 
@@ -85,29 +79,55 @@ async function bookIt(orderedCourt) {
     // go to next step
     const nextBtn2 = await page.waitForSelector(selectedPartnerNextBtnSelector);
     await nextBtn2.click();
+}
 
-    // accept 2 conditions
+async function acceptConditionAndConfirmBooking() {
     const conditionCheckbox1 = await page.waitForSelector(bookingConditionCheckBox1)
     await conditionCheckbox1.click();
 
     try {
         // sometime not show???
-        const conditionCheckbox2 = await page.waitForSelector(bookingConditionCheckBox2, { timeout: 3000 })
+        const conditionCheckbox2 = await page.waitForSelector(bookingConditionCheckBox2, {timeout: 3000})
         await conditionCheckbox2.click();
     } catch (e) {
-        console.error("condition2 not show up")
+        console.error("alert by 30 min early checkbox not show up")
     }
 
     // confirm booking
     const confirmBookingBtn = await page.waitForSelector(confirmBookingBtnSelector);
     await confirmBookingBtn.click();
+}
 
-    //booking successfully, close modal
+async function closeModals() {
     const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
     await closeModalBtn.click();
 
     const finalCloseModalBtn = await page.waitForSelector(finalCloseBookingModalBtnSelector)
     await finalCloseModalBtn.click();
+}
+
+async function bookIt(orderedCourt) {
+
+    console.log(`booking ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
+
+    for (const slot of orderedCourt.peakTimeSlots) {
+        // peak time booking
+        await slot.click();
+
+        await selectStadiumPassOption();
+        await selectPlayers();
+        await acceptConditionAndConfirmBooking();
+        await closeModals();
+    }
+
+    // off-peak booking
+    await orderedCourt.startOffPeakSlot.click();
+    await orderedCourt.endOffPeakSlot.click();
+
+    await selectStadiumPassOption();
+    await selectPlayers();
+    await acceptConditionAndConfirmBooking();
+    await closeModals();
 }
 
 const checkAndBookSlots = async () => {
@@ -127,7 +147,8 @@ const checkAndBookSlots = async () => {
         let currentTime = 0
         let startTime = "";
         let endTime = "";
-        let startSlot, endSlot;
+        let startOffPeakSlot, endOffPeakSlot;
+        let peakTimeSlots = [];
         const slotsPerCourt = await court.$$(`>${bookingSlotAvailableSelector}`)
 
         for (const slot of slotsPerCourt) {
@@ -136,15 +157,20 @@ const checkAndBookSlots = async () => {
             if (peopleBookedSlot || eventBookedSlot) {
                 currentTime = 0;
                 startTime = "";
-                startSlot = null;
+                startOffPeakSlot = null;
             } else {
                 const currentSlotTime = extractTime((await slot.textContent()).trim()); // output like: "16:00"
-                // Weekdays: 16:00-22:00, +1, after 21:00
-                // Weekends: 09:00-18:00, +2, after 16:00
+                // Weekdays: 16:00-22:00, +1, after 21:00, peak time 21:00-22:00
+                // Weekends: 09:00-18:00, +2, after 16:00, peak time 16:00-17:00
                 if (currentSlotTime && isSuitableTime(currentSlotTime, dateObj)) {
                     if (startTime === "") {
+                        if (isPeakTime(currentSlotTime, dateObj)) {
+                            peakTimeSlots.push(slot);
+                        } else {
+                            // the first off-peak start time
+                            startOffPeakSlot = slot;
+                        }
                         startTime = currentSlotTime
-                        startSlot = slot;
                     }
                     // 1 slot is 30 minutes
                     currentTime += 30;
@@ -152,7 +178,7 @@ const checkAndBookSlots = async () => {
                         maxTimePerCourt = currentTime;
                     }
                     endTime = calculatePlus30MinutesTime(currentSlotTime, dateObj);
-                    endSlot = slot;
+                    endOffPeakSlot = slot;
                 }
             }
         }
@@ -161,8 +187,15 @@ const checkAndBookSlots = async () => {
             console.log(`=====court ${++index} is fully booked!==========`)
         } else {
             console.log(`=====court ${++index} max play time ${maxTimePerCourt} minutes, from ${startTime === "" ? "now" : startTime} to ${endTime}==========`)
-            //TODO, check if it starts from peak time....
-            courtsToTime.push({court: index, time: maxTimePerCourt, startTime, endTime, startSlot, endSlot})
+            courtsToTime.push({
+                court: index,
+                time: maxTimePerCourt,
+                startTime,
+                endTime,
+                startOffPeakSlot,
+                endOffPeakSlot,
+                peakTimeSlots
+            })
         }
     }
 
@@ -170,7 +203,7 @@ const checkAndBookSlots = async () => {
     if (courtsToTime.length > 0) {
         const mostSuitableCourt = _.orderBy(courtsToTime, ['time'], ['desc'])[0]
         // only book the court where can play more than 2 hours
-        if(mostSuitableCourt.time >= 120) {
+        if (mostSuitableCourt.time >= 120) {
             await bookIt(mostSuitableCourt)
         } else {
             console.log("There is no suitable court on this day, skip it....")
@@ -201,13 +234,12 @@ const logout = async () => {
     try {
         if (await login()) {
             console.log('Logged in successfully!');
-
             for (let i = 1; i <= 8; i++) {
-                const hasBooked = await checkAndBookSlots()
-                if (!hasBooked) {
+                if (i !== 7) {
+                    // go to the last day
                     await goToNextDay();
                 } else {
-                    break;
+                    await checkAndBookSlots()
                 }
             }
             await logout()
