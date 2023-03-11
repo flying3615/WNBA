@@ -234,6 +234,8 @@ const logout = async () => {
     try {
         await login()
         console.log('Logged in successfully!');
+        const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
+        console.log("Today is ", bookingDate)
         for (let i = 1; i <= 8; i++) {
             if (i !== 8) {
                 // go to the last day
