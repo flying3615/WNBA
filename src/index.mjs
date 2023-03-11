@@ -227,7 +227,6 @@ const logout = async () => {
     const singOut = await page.waitForSelector(signOutButton)
     await singOut.click()
     console.log('Logged out successfully!');
-
 }
 
 (async () => {
@@ -238,7 +237,7 @@ const logout = async () => {
         console.log("Today is ", bookingDate)
         for (let i = 1; i <= 8; i++) {
             if (i !== 8) {
-                // go to the last day
+                // go to the latest day
                 await goToNextDay();
             } else {
                 await checkAndBookSlots()
@@ -246,7 +245,7 @@ const logout = async () => {
         }
         await logout()
     } catch (e) {
-        console.log(e)
+        console.error(e)
     } finally {
         await browser.close();
     }
