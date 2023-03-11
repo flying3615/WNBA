@@ -1,7 +1,5 @@
 import {chromium} from "playwright";
 import _ from 'lodash';
-import fs from 'fs';
-import readline from 'readline';
 import {
     bookingButtonSelector,
     bookingGridSelector,
@@ -20,7 +18,7 @@ import {
     selectedPartnerNextBtnSelector,
     bookingConditionCheckBox1,
     bookingConditionCheckBox2,
-    confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector, userName, password
+    confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector
 } from "./constant.mjs";
 import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, readLines} from "./util.mjs";
 
@@ -29,7 +27,7 @@ import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, rea
 
 let browser, context, page, dateObj
 
-const login = async () => {
+export const login = async () => {
     browser = await chromium.launch({headless: true});
     context = await browser.newContext();
     page = await context.newPage();
@@ -116,7 +114,6 @@ const closeModals = async () => {
 }
 
 const bookIt = async (orderedCourt) => {
-
     console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
     for (const slot of orderedCourt.peakTimeSlots) {
         // peak time booking
@@ -185,7 +182,6 @@ const checkAndBookSlots = async () => {
                     if (currentTime > maxTimePerCourt) {
                         maxTimePerCourt = currentTime;
                     }
-                    // TODO endTime no later than 23:30
                     endTime = calculatePlus30MinutesTime(currentSlotTime, dateObj);
                     endOffPeakSlot = slot;
                 }

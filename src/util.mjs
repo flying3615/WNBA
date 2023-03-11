@@ -40,7 +40,14 @@ export const isWeekend = (dateObj) => {
 }
 
 export const isSuitableTime = (currentSlotTime, dateObj) => {
-    const hour = parseInt(currentSlotTime.split(":")[0]);
+    const timeSlot = parseInt(currentSlotTime.split(":"));
+    const hour = timeSlot[0];
+    const minutes = timeSlot[1];
+
+    if (hour === 23 && minutes === 30) {
+        // booking no later than 23:30
+        return false;
+    }
     if (isWeekend(dateObj) && hour >= 16) {
         //after 16:00
         return true;
@@ -53,7 +60,7 @@ export const isPeakTime = (currentSlotTime, dateObj) => {
     return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21
 }
 
-export const readLines = (filePath)=> {
+export const readLines = (filePath) => {
     const lines = [];
     const rl = readline.createInterface({
         input: fs.createReadStream('../partners.txt'),
