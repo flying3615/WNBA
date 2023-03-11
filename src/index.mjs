@@ -23,22 +23,39 @@ import {
     finalCloseBookingModalBtnSelector,
     errorMessageShouldNotInModal
 } from "./constant.mjs";
-import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, readLines} from "./util.mjs";
+import {
+    calculatePlus30MinutesTime,
+    checkLockFileExist, createBookedLockFile,
+    extractTime,
+    isPeakTime,
+    isSuitableTime,
+    readLines
+} from "./util.mjs";
+import * as fs from "fs";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
 
 let browser, context, page, dateObj
 
+const date = new Date();
+const month = date.getMonth() + 1;
+const day = date.getDate();
+
+const todayLockFileName = `${year}-${month}-${day}.lock`;
+
+const inProductEnv = false
+const DEBUGGING = true;
+
 export const login = async () => {
-    browser = await chromium.launch({headless: false});
+    browser = await chromium.launch({headless: inProductEnv});
     context = await browser.newContext();
     page = await context.newPage();
 
     await page.goto('https://bookings.wnba.org.nz/login/credentials', {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
-    const credentials = await readLines("../login.txt")
+    const credentials = await readLines(inProductEnv ? "/home/ubuntu/login.txt" : "../login.txt")
 
     const usernameInput = await page.$('input[name=username]');
     await usernameInput.type(credentials[0]);
@@ -81,7 +98,7 @@ const checkBookingError = async () => {
 }
 
 const selectPartners = async () => {
-    const partners = await readLines("../partners.txt")
+    const partners = await readLines(inProductEnv ? "/home/ubuntu/partners.txt" : "../partners.txt")
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
         await partnerInput.type(name);
@@ -221,19 +238,26 @@ const checkAndBookSlots = async () => {
         const mostSuitableCourt = _.orderBy(courtsToTime, ['time'], ['desc'])[0]
         // only book the court where can play more than 2 hours
         if (mostSuitableCourt.time >= 120) {
+            if (DEBUGGING) {
+                console.log("in debug mode, skip the real booking....")
+                return;
+            }
             await bookIt(mostSuitableCourt)
         } else {
-            console.log("There is no suitable court on this day, skip it....")
+            console.log("There is no suitable court on this day, will try later....")
         }
     }
-    return false;
 }
 
 const goToNextDay = async () => {
-    await page.waitForLoadState('domcontentloaded');
-    const nextDayLink = await page.waitForSelector(nextDayButton)
-    console.log('Go to next day.....');
-    await nextDayLink.click()
+    try {
+        await page.waitForLoadState('domcontentloaded');
+        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 2000})
+        console.log('Go to next day.....');
+        await nextDayLink.click()
+    } catch (e) {
+        throw new Error("latest day has not been opened for booking...")
+    }
 }
 
 const logout = async () => {
@@ -245,24 +269,39 @@ const logout = async () => {
     console.log('Logged out successfully!');
 }
 
+const bookingJob = async () => {
+    await login()
+    console.log('Logged in successfully!');
+    const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
+    console.log("Today is ", bookingDate)
+    for (let i = 0; i <= 7; i++) {
+        if (i !== 7) {
+            // go to the latest day
+            await goToNextDay();
+        } else {
+            await checkAndBookSlots()
+        }
+    }
+    await logout()
+}
+
 (async () => {
     try {
-        await login()
-        console.log('Logged in successfully!');
-        const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-        console.log("Today is ", bookingDate)
-        for (let i = 1; i <= 8; i++) {
-            if (i !== 8) {
-                // go to the latest day
-                await goToNextDay();
-            } else {
-                await checkAndBookSlots()
+        const existingLockFile = checkLockFileExist();
+        if (!existingLockFile) {
+            // if there is no booking lock, then make a book
+            await bookingJob()
+            createBookedLockFile();
+        } else {
+            // if exists, but not equal as today's, means it's old one, delete it then do the job
+            if (todayLockFileName !== existingLockFile) {
+                fs.unlinkSync(existingLockFile);
+                await bookingJob()
             }
         }
-        await logout()
     } catch (e) {
         console.error(e)
     } finally {
-        await browser.close();
+        browser && await browser.close();
     }
 })();

@@ -74,3 +74,37 @@ export const readLines = async (filePath) => {
 
     return lines;
 }
+
+export const createBookedLockFile = ()=>{
+    const date = new Date();
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+
+    const filename = `${year}-${month}-${day}.lock`;
+
+    fs.writeFile(filename, '', function(err) {
+        if (err) {
+            console.log(err);
+        } else {
+            console.log(`Booked lock file ${filename} created successfully.`);
+        }
+    });
+}
+
+export const checkLockFileExist = () => {
+    const directory = './';
+    try {
+        const files = fs.readdirSync(directory);
+        const lockFiles = files.filter(file => file.endsWith('.lock'));
+        if (lockFiles.length > 0) {
+            console.log(`Found ${lockFiles[0]} file in current directory, today has already booked`);
+            return lockFiles[0];
+        } else {
+            console.log(`No .lock files found in ${directory}.`);
+            return null;
+        }
+    } catch (err) {
+        console.error(`Failed to read directory ${directory}: ${err}`);
+    }
+}
