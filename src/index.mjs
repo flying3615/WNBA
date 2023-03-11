@@ -232,20 +232,19 @@ const logout = async () => {
 
 (async () => {
     try {
-        if (await login()) {
-            console.log('Logged in successfully!');
-            for (let i = 1; i <= 8; i++) {
-                if (i !== 8) {
-                    // go to the last day
-                    await goToNextDay();
-                } else {
-                    await checkAndBookSlots()
-                }
+        await login()
+        console.log('Logged in successfully!');
+        for (let i = 1; i <= 8; i++) {
+            if (i !== 8) {
+                // go to the last day
+                await goToNextDay();
+            } else {
+                await checkAndBookSlots()
             }
-            await logout()
-        } else {
-            throw Error("Can't login")
         }
+        await logout()
+    } catch (e) {
+        console.log(e)
     } finally {
         await browser.close();
     }
