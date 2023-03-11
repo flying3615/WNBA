@@ -1,5 +1,7 @@
 import {chromium} from "playwright";
 import _ from 'lodash';
+import fs from 'fs';
+import readline from 'readline';
 import {
     bookingButtonSelector,
     bookingGridSelector,
@@ -20,7 +22,7 @@ import {
     bookingConditionCheckBox2,
     confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector, userName, password
 } from "./constant.mjs";
-import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime} from "./util.mjs";
+import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, readLines} from "./util.mjs";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
@@ -32,16 +34,16 @@ const login = async () => {
     context = await browser.newContext();
     page = await context.newPage();
 
-    // 导航到登录页面
     await page.goto('https://bookings.wnba.org.nz/login/credentials', {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
-    // 填写登录表单并提交
+    const credentials = readLines("../login.txt")
+
     const usernameInput = await page.$('input[name=username]');
-    await usernameInput.type(userName);
+    await usernameInput.type(credentials[0]);
 
     const passwordInput = await page.$('input[name=password]');
-    await passwordInput.type(password);
+    await passwordInput.type(credentials[1]);
 
     const submitButton = await page.$('button[type=submit]');
     await submitButton.click();
@@ -49,7 +51,6 @@ const login = async () => {
     const bookingButton = await page.waitForSelector(bookingButtonSelector)
     await bookingButton.click()
 
-    // 等待登录成功，例如，页面出现欢迎信息
     return await page.waitForSelector('.UserMenu-toggle');
 }
 
@@ -60,7 +61,7 @@ const getDate = async () => {
     dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
-async function selectStadiumPassOption() {
+const selectStadiumPassOption = async () => {
     const stadiumPassOption = await page.waitForSelector(stadiumPassRadioSelector);
     await stadiumPassOption.click();
 
@@ -69,19 +70,27 @@ async function selectStadiumPassOption() {
     await nextBtn1.click();
 }
 
-async function selectPartners() {
-    const partnerInput = await page.waitForSelector(partnersInputSelector);
-    await partnerInput.type('Ivan Shi');
+const selectPartners = async () => {
+    const partners = readLines("../partners.txt")
 
-    const partner = await page.waitForSelector(partnerOptionSelector)
-    await partner.click();
+    for (const name of partners) {
+        const partnerInput = await page.waitForSelector(partnersInputSelector);
+        await partnerInput.type(name);
+        try {
+            const partner = await page.waitForSelector(partnerOptionSelector)
+            await partner.click();
+        } catch (e) {
+            console.error(`Couldn't select partner ${name}`);
+        }
+    }
+
 
     // go to next step
     const nextBtn2 = await page.waitForSelector(selectedPartnerNextBtnSelector);
     await nextBtn2.click();
 }
 
-async function acceptConditionAndConfirmBooking() {
+const acceptConditionAndConfirmBooking = async () => {
     const conditionCheckbox1 = await page.waitForSelector(bookingConditionCheckBox1)
     await conditionCheckbox1.click();
 
@@ -98,7 +107,7 @@ async function acceptConditionAndConfirmBooking() {
     await confirmBookingBtn.click();
 }
 
-async function closeModals() {
+const closeModals = async () => {
     const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
     await closeModalBtn.click();
 
@@ -106,10 +115,9 @@ async function closeModals() {
     await finalCloseModalBtn.click();
 }
 
-async function bookIt(orderedCourt) {
+const bookIt = async (orderedCourt) => {
 
     console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
-
     for (const slot of orderedCourt.peakTimeSlots) {
         // peak time booking
         await slot.click();
@@ -177,6 +185,7 @@ const checkAndBookSlots = async () => {
                     if (currentTime > maxTimePerCourt) {
                         maxTimePerCourt = currentTime;
                     }
+                    // TODO endTime no later than 23:30
                     endTime = calculatePlus30MinutesTime(currentSlotTime, dateObj);
                     endOffPeakSlot = slot;
                 }

@@ -1,9 +1,5 @@
 export const year = 2023
 
-export const userName = 'kafofe8345@rolenot.com'
-export const password = ''
-
-
 export const bookingButtonSelector = "body > ui-view > app-route > div > main > home-route > div > div > cards > div > card:nth-child(2) > div > card-home-welcome > section > div.HomeActionButtons > div:nth-child(2) > action-button > a";
 export const nextDayButton = "body > ui-view > app-route > div > main > ui-view > booking-view-route > div > div.Container.Container--flex.NumAreas--6 > cards > div > card > div > booking-grid-header > header > booking-grid-nav > h1 > button:nth-child(3)";
 export const dateSelector = "body > ui-view > app-route > div > main > ui-view > booking-view-route > div > div.Container.Container--flex.NumAreas--6 > cards > div > card > div > booking-grid-header > header > booking-grid-nav > h1 > span > span.BookingGridNav-month.BookingGridNav-month--full.ng-binding";

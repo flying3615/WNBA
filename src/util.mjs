@@ -1,3 +1,6 @@
+import readline from "readline";
+import fs from "fs";
+
 export const extractTime = (str) => {
     const pattern = /\b\d{2}:\d{2}\b/;
     const match = str.match(pattern);
@@ -48,4 +51,22 @@ export const isSuitableTime = (currentSlotTime, dateObj) => {
 export const isPeakTime = (currentSlotTime, dateObj) => {
     const hour = parseInt(currentSlotTime.split(":")[0]);
     return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21
+}
+
+export const readLines = (filePath)=> {
+    const lines = [];
+    const rl = readline.createInterface({
+        input: fs.createReadStream('../partners.txt'),
+    });
+
+    rl.on('line', (line) => {
+        lines.push(line)
+    });
+
+    rl.on('close', () => {
+        console.log(lines);
+        rl.close();
+    });
+
+    return lines;
 }
