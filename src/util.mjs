@@ -63,7 +63,7 @@ export const isPeakTime = (currentSlotTime, dateObj) => {
 export const readLines = (filePath) => {
     const lines = [];
     const rl = readline.createInterface({
-        input: fs.createReadStream('../partners.txt'),
+        input: fs.createReadStream(filePath),
     });
 
     rl.on('line', (line) => {
@@ -71,7 +71,6 @@ export const readLines = (filePath) => {
     });
 
     rl.on('close', () => {
-        console.log(lines);
         rl.close();
     });
 
