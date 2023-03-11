@@ -1,7 +1,7 @@
 export const year = 2023
 
 export const userName = 'kafofe8345@rolenot.com'
-export const password = '!QAZxsw2'
+export const password = ''
 
 
 export const bookingButtonSelector = "body > ui-view > app-route > div > main > home-route > div > div > cards > div > card:nth-child(2) > div > card-home-welcome > section > div.HomeActionButtons > div:nth-child(2) > action-button > a";
