@@ -44,8 +44,8 @@ const day = date.getDate();
 
 const todayLockFileName = `${year}-${month}-${day}.lock`;
 
-const inProductEnv = false
-const DEBUGGING = true;
+const inProductEnv = true
+const DEBUGGING = false;
 
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
