@@ -55,7 +55,7 @@ export const login = async () => {
     await page.goto('https://bookings.wnba.org.nz/login/credentials', {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
-    const credentials = await readLines(inProductEnv ? "/home/ubuntu/login.txt" : "../login.txt")
+    const credentials = await readLines(inProductEnv ? "/home/ubuntu/hello-club/login.txt" : "../login.txt")
 
     const usernameInput = await page.$('input[name=username]');
     await usernameInput.type(credentials[0]);
@@ -98,7 +98,7 @@ const checkBookingError = async () => {
 }
 
 const selectPartners = async () => {
-    const partners = await readLines(inProductEnv ? "/home/ubuntu/partners.txt" : "../partners.txt")
+    const partners = await readLines(inProductEnv ? "/home/ubuntu/hello-club/partners.txt" : "../partners.txt")
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
         await partnerInput.type(name);
