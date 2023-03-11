@@ -23,7 +23,7 @@ export const partnerOptionSelector = "#members > div > ul > li"
 export const selectedPartnerNextBtnSelector = "body > div.modal-wrapper.ModalWrapper.ng-scope > div > flow-booking-select-members > div.Modal-footer > button-bar > div > div.ButtonGroup.ButtonGroup--primary.ng-scope > button.Button.Button--success.ng-animate-disabled"
 
 
-
+export const errorMessageShouldNotInModal = "body:not(:has(.AlertContents))"
 export const bookingConditionCheckBox1 = "body > div.modal-wrapper.ModalWrapper.ng-scope > div > flow-booking-confirm > div.Modal-body.Modal-body--lessPaddingBottom.overflowing > div.GroupSet.ng-scope > div > div.Group.ng-scope > check-box > label"
 export const bookingConditionCheckBox2 = "body > div.modal-wrapper.ModalWrapper.ng-scope > div > flow-booking-confirm > div.Modal-body.Modal-body--lessPaddingBottom.overflowing > div.GroupSet.ng-scope > div > div.CheckBoxWrapper.ng-scope > check-box > label"
 

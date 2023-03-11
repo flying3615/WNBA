@@ -18,7 +18,10 @@ import {
     selectedPartnerNextBtnSelector,
     bookingConditionCheckBox1,
     bookingConditionCheckBox2,
-    confirmBookingBtnSelector, closeBookingModalBtnSelector, finalCloseBookingModalBtnSelector
+    confirmBookingBtnSelector,
+    closeBookingModalBtnSelector,
+    finalCloseBookingModalBtnSelector,
+    errorMessageShouldNotInModal
 } from "./constant.mjs";
 import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, readLines} from "./util.mjs";
 
@@ -28,14 +31,14 @@ import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime, rea
 let browser, context, page, dateObj
 
 export const login = async () => {
-    browser = await chromium.launch({headless: true});
+    browser = await chromium.launch({headless: false});
     context = await browser.newContext();
     page = await context.newPage();
 
     await page.goto('https://bookings.wnba.org.nz/login/credentials', {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
-    const credentials = readLines("../login.txt")
+    const credentials = await readLines("../login.txt")
 
     const usernameInput = await page.$('input[name=username]');
     await usernameInput.type(credentials[0]);
@@ -66,26 +69,35 @@ const selectStadiumPassOption = async () => {
     // go to next step
     const nextBtn1 = await page.waitForSelector(chooseStadiumPassNextBtnSelector);
     await nextBtn1.click();
+    await checkBookingError();
+}
+
+const checkBookingError = async () => {
+    try {
+        await page.waitForSelector(errorMessageShouldNotInModal, {timeout: 1000});
+    } catch (error) {
+        throw Error("Error appears during booking...");
+    }
 }
 
 const selectPartners = async () => {
-    const partners = readLines("../partners.txt")
-
+    const partners = await readLines("../partners.txt")
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
         await partnerInput.type(name);
         try {
             const partner = await page.waitForSelector(partnerOptionSelector)
             await partner.click();
+            console.log("add player " + name)
         } catch (e) {
             console.error(`Couldn't select partner ${name}`);
         }
     }
 
-
     // go to next step
     const nextBtn2 = await page.waitForSelector(selectedPartnerNextBtnSelector);
     await nextBtn2.click();
+    await checkBookingError();
 }
 
 const acceptConditionAndConfirmBooking = async () => {
@@ -214,7 +226,6 @@ const checkAndBookSlots = async () => {
             console.log("There is no suitable court on this day, skip it....")
         }
     }
-
     return false;
 }
 

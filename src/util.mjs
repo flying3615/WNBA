@@ -1,5 +1,6 @@
 import readline from "readline";
 import fs from "fs";
+import * as events from "events";
 
 export const extractTime = (str) => {
     const pattern = /\b\d{2}:\d{2}\b/;
@@ -40,14 +41,13 @@ export const isWeekend = (dateObj) => {
 }
 
 export const isSuitableTime = (currentSlotTime, dateObj) => {
-    const timeSlot = parseInt(currentSlotTime.split(":"));
-    const hour = timeSlot[0];
-    const minutes = timeSlot[1];
-
+    const hour = parseInt(currentSlotTime.split(":")[0]);
+    const minutes = parseInt(currentSlotTime.split(":")[1]);
     if (hour === 23 && minutes === 30) {
         // booking no later than 23:30
         return false;
     }
+
     if (isWeekend(dateObj) && hour >= 16) {
         //after 16:00
         return true;
@@ -60,7 +60,7 @@ export const isPeakTime = (currentSlotTime, dateObj) => {
     return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21
 }
 
-export const readLines = (filePath) => {
+export const readLines = async (filePath) => {
     const lines = [];
     const rl = readline.createInterface({
         input: fs.createReadStream(filePath),
@@ -70,9 +70,7 @@ export const readLines = (filePath) => {
         lines.push(line)
     });
 
-    rl.on('close', () => {
-        rl.close();
-    });
+    await events.once(rl, 'close');
 
     return lines;
 }
