@@ -28,7 +28,7 @@ import {calculatePlus30MinutesTime, extractTime, isPeakTime, isSuitableTime} fro
 let browser, context, page, dateObj
 
 const login = async () => {
-    browser = await chromium.launch({headless: false});
+    browser = await chromium.launch({headless: true});
     context = await browser.newContext();
     page = await context.newPage();
 
@@ -235,7 +235,7 @@ const logout = async () => {
         if (await login()) {
             console.log('Logged in successfully!');
             for (let i = 1; i <= 8; i++) {
-                if (i !== 7) {
+                if (i !== 8) {
                     // go to the last day
                     await goToNextDay();
                 } else {
