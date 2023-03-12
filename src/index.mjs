@@ -1,5 +1,6 @@
 import {chromium} from "playwright";
 import _ from 'lodash';
+import fs from 'fs'
 import {
     bookingButtonSelector,
     bookingGridSelector,
@@ -31,7 +32,6 @@ import {
     isSuitableTime,
     readLines
 } from "./util.mjs";
-import * as fs from "fs";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
@@ -46,6 +46,8 @@ const todayLockFileName = `${year}-${month}-${day}.lock`;
 
 const inProductEnv = true
 const DEBUGGING = false;
+
+let loggedIn = null;
 
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
@@ -135,11 +137,11 @@ const acceptConditionAndConfirmBooking = async () => {
 }
 
 const closeModals = async () => {
-    const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
-    await closeModalBtn.click();
-
     const finalCloseModalBtn = await page.waitForSelector(finalCloseBookingModalBtnSelector)
     await finalCloseModalBtn.click();
+
+    const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
+    await closeModalBtn.click();
 }
 
 const bookIt = async (orderedCourt) => {
@@ -151,7 +153,11 @@ const bookIt = async (orderedCourt) => {
         await selectStadiumPassOption();
         await selectPartners();
         await acceptConditionAndConfirmBooking();
-        await closeModals();
+        try{
+            await closeModals();
+        }catch (e) {
+            console.log("Closing modals happen error")
+        }
     }
 
     // off-peak booking
@@ -161,7 +167,11 @@ const bookIt = async (orderedCourt) => {
     await selectStadiumPassOption();
     await selectPartners();
     await acceptConditionAndConfirmBooking();
-    await closeModals();
+    try{
+        await closeModals();
+    }catch (e) {
+        console.log("Closing modals happen error")
+    }
 }
 
 const checkAndBookSlots = async () => {
@@ -270,7 +280,6 @@ const logout = async () => {
 }
 
 const bookingJob = async () => {
-    await login()
     console.log('Logged in successfully!');
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
     console.log("Today is ", bookingDate)
@@ -282,7 +291,6 @@ const bookingJob = async () => {
             await checkAndBookSlots()
         }
     }
-    await logout()
 }
 
 (async () => {
@@ -290,18 +298,21 @@ const bookingJob = async () => {
         const existingLockFile = checkLockFileExist();
         if (!existingLockFile) {
             // if there is no booking lock, then make a book
+            loggedIn = await login()
             await bookingJob()
             createBookedLockFile();
         } else {
             // if exists, but not equal as today's, means it's old one, delete it then do the job
             if (todayLockFileName !== existingLockFile) {
                 fs.unlinkSync(existingLockFile);
+                loggedIn = await login()
                 await bookingJob()
             }
         }
     } catch (e) {
         console.error(e)
     } finally {
+        loggedIn && await logout()
         browser && await browser.close();
     }
 })();
