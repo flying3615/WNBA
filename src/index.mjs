@@ -49,6 +49,23 @@ const DEBUGGING = false;
 
 let loggedIn = null;
 
+// console.log with timestamp
+console.log = (function() {
+    const console_log = console.log;
+    const timeStart = new Date().getTime();
+
+    return function() {
+        const delta = new Date().getTime() - timeStart;
+        const args = [];
+        args.push((delta / 1000).toFixed(2) + ':');
+        for(let i = 0; i < arguments.length; i++) {
+            args.push(arguments[i]);
+        }
+        console_log.apply(console, args);
+    };
+})();
+
+
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
     context = await browser.newContext();
