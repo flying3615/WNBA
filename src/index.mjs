@@ -53,7 +53,7 @@ let loggedIn = null;
 console.logCopy = console.log.bind(console);
 console.log = function(data)
 {
-    const currentDate = '[' + new Date().toUTCString() + '] ';
+    const currentDate = '[' + new Date().toString() + '] ';
     this.logCopy(currentDate, data);
 };
 
@@ -271,8 +271,8 @@ const checkAndBookSlots = async () => {
 
 const goToNextDay = async () => {
     try {
-        await page.waitForLoadState('domcontentloaded');
-        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 2000})
+        await page.waitForLoadState('networkidle');
+        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 5000})
         console.log('Go to next day.....');
         await nextDayLink.click()
     } catch (e) {
