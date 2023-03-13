@@ -292,7 +292,7 @@ const logout = async () => {
 const bookingJob = async () => {
     console.log('Logged in successfully!');
     for (let i = 0; i <= 7; i++) {
-        if (i !== 7) {
+        if (i < 7) {
             // go to the latest day
             await goToNextDay();
         } else {
