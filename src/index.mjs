@@ -84,7 +84,9 @@ export const login = async () => {
 
 const getDate = async () => {
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    console.log("booking Date = ", bookingDate)
+    const month = bookingDate.getMonth() + 1;
+    const day = bookingDate.getDate();
+    console.log(`booking Date: ${day}/${month}`)
     const date = new Date(`${bookingDate} ${year}`);
     dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
@@ -290,7 +292,9 @@ const logout = async () => {
 const bookingJob = async () => {
     console.log('Logged in successfully!');
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    console.log("Today is ", bookingDate)
+    const month = bookingDate.getMonth() + 1;
+    const day = bookingDate.getDate();
+    console.log(`Today is ${day}/${month}`)
     for (let i = 0; i <= 7; i++) {
         if (i !== 7) {
             // go to the latest day
