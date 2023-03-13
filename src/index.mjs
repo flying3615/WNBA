@@ -84,11 +84,11 @@ export const login = async () => {
 
 const getDate = async () => {
     const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    const month = bookingDate.getMonth() + 1;
-    const day = bookingDate.getDate();
-    console.log(`booking Date: ${day}/${month}`)
     const date = new Date(`${bookingDate} ${year}`);
     dateObj = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+    console.log(`booking Date: ${day}/${month}`)
 }
 
 const selectStadiumPassOption = async () => {
@@ -291,10 +291,6 @@ const logout = async () => {
 
 const bookingJob = async () => {
     console.log('Logged in successfully!');
-    const bookingDate = await (await page.waitForSelector(dateSelector)).textContent();
-    const month = bookingDate.getMonth() + 1;
-    const day = bookingDate.getDate();
-    console.log(`Today is ${day}/${month}`)
     for (let i = 0; i <= 7; i++) {
         if (i !== 7) {
             // go to the latest day
