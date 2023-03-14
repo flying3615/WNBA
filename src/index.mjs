@@ -198,7 +198,8 @@ const checkAndBookSlots = async () => {
         let currentTime = 0
         let startTime = "";
         let endTime = "";
-        let startOffPeakSlot, endOffPeakSlot;
+        let startOffPeakSlot = null;
+        let endOffPeakSlot = null;
         let peakTimeSlots = [];
         const slotsPerCourt = await court.$$(`>${bookingSlotAvailableSelector}`)
 
@@ -260,8 +261,9 @@ const checkAndBookSlots = async () => {
                 return;
             }
             await bookIt(mostSuitableCourt)
+            createBookedLockFile();
         } else {
-            console.log("There is no suitable court on this day, will try later....")
+            console.log("There is no suitable court on this day, will try 1 hour later....")
         }
     }
 }
@@ -305,7 +307,6 @@ const bookingJob = async () => {
             // if there is no booking lock, then make a book
             loggedIn = await login()
             await bookingJob()
-            createBookedLockFile();
         } else {
             // if exists, but not equal as today's, means it's old one, delete it then do the job
             if (todayLockFileName !== existingLockFile) {
