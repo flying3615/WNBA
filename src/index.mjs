@@ -169,12 +169,11 @@ const closeModals = async () => {
 
 const bookIt = async (orderedCourt) => {
     console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
-
     // peak time booking
-    if (orderedCourt.peakTimeSlots && orderedCourt.peakTimeSlots.length === 2) {
+    if (orderedCourt.peakTimeSlots && orderedCourt.peakTimeSlots.length > 0) {
         try {
-            await orderedCourt.peakTimeSlots[0].click();
-            await orderedCourt.peakTimeSlots[1].click();
+            await orderedCourt.peakTimeSlots.shift().click(); //first slot
+            await orderedCourt.peakTimeSlots.pop().click(); // last slot
             await selectStadiumPassOption();
             await selectPartners();
             await acceptConditionAndConfirmBooking();
