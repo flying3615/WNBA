@@ -205,7 +205,7 @@ const checkAndBookSlots = async () => {
     const courts = await bookingGrid.$$(">div")
     let index = 0
 
-    const courtsToTime = [];
+    const courtObjs = [];
 
     for (const court of courts) {
         let maxTimePerCourt = 0;
@@ -260,13 +260,23 @@ const checkAndBookSlots = async () => {
                 }
             }
         }
+        let oldFloor
+        switch (index){
+            case 0: oldFloor = 0; break // old rubber
+            case 1: oldFloor = -1; break // no rubber
+            case 2: oldFloor = 1; break
+            case 3: oldFloor = 1; break
+            case 4: oldFloor = 2; break // preferable
+            case 5: oldFloor = 0;  break // old rubber
+        }
 
         if (maxTimePerCourt === 0) {
             console.log(`=====court ${++index} is fully booked!==========`)
         } else {
             console.log(`=====court ${++index} max play time ${maxTimePerCourt} minutes, from ${startTime === "" ? "now" : startTime} to ${endTime}==========`)
-            courtsToTime.push({
+            courtObjs.push({
                 court: index,
+                oldFloor: oldFloor,
                 time: maxTimePerCourt,
                 startTime,
                 endTime,
@@ -278,8 +288,8 @@ const checkAndBookSlots = async () => {
     }
 
     // sort courts by time per day
-    if (courtsToTime.length > 0) {
-        const mostSuitableCourt = _.orderBy(courtsToTime, ['time'], ['desc'])[0]
+    if (courtObjs.length > 0) {
+        const mostSuitableCourt = _.orderBy(courtObjs, ['time', 'oldFloor'], ['desc', 'desc'])[0]
         // only book the court where can play more than 2 hours
         if (mostSuitableCourt.time >= 120) {
             if (DEBUGGING) {
