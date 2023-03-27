@@ -85,7 +85,7 @@ export const login = async () => {
 
 export const login_google = async () => {
     browser = await firefox.launch({ headless: inProductEnv });
-    page = await browser.newPage({ storageState: 'setup/storage-state.json' });
+    page = await browser.newPage({ storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "setup/storage-state.json" });
 
     await page.goto('https://bookings.wnba.org.nz/bookings', {waitUntil: 'networkidle'});
     return await page.waitForSelector('.UserMenu-toggle');
