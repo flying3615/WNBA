@@ -45,8 +45,8 @@ const day = date.getDate();
 
 const todayLockFileName = `${year}-${month}-${day}.lock`;
 
-const inProductEnv = true
-const DEBUGGING = false;
+const inProductEnv = false
+const DEBUGGING = true;
 
 let loggedIn = null;
 
@@ -85,9 +85,12 @@ export const login = async () => {
 
 export const login_google = async () => {
     browser = await firefox.launch({ headless: inProductEnv });
-    page = await browser.newPage({ storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "setup/storage-state.json" });
+    page = await browser.newPage({ storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "../setup/storage-state.json" });
 
-    await page.goto('https://bookings.wnba.org.nz/bookings', {waitUntil: 'networkidle'});
+    await page.goto('https://bookings.wnba.org.nz/');
+    const bookingButton = await page.waitForSelector(bookingButtonSelector)
+    await bookingButton.click()
+
     return await page.waitForSelector('.UserMenu-toggle');
 }
 
