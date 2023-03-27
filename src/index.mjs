@@ -45,7 +45,7 @@ const day = date.getDate();
 
 const todayLockFileName = `${year}-${month}-${day}.lock`;
 
-const inProductEnv = false;
+export const inProductEnv = false;
 const DEBUGGING = false;
 
 let loggedIn = null;
@@ -57,12 +57,14 @@ console.log = function (data) {
     this.logCopy(currentDate, data);
 };
 
+const host = await readLines(inProductEnv ? "/home/ubuntu/hello-club/host.txt" : "../host.txt")
+
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
     context = await browser.newContext();
     page = await context.newPage();
 
-    await page.goto('https://bookings.wnba.org.nz/login/credentials', {waitUntil: 'networkidle'});
+    await page.goto(`https://${host}/login/credentials`, {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
     const credentials = await readLines(inProductEnv ? "/home/ubuntu/hello-club/login.txt" : "../login.txt")
@@ -86,7 +88,7 @@ export const login_google = async () => {
     browser = await firefox.launch({headless: inProductEnv});
     page = await browser.newPage({storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "../setup/storage-state.json"});
 
-    await page.goto('https://bookings.wnba.org.nz/');
+    await page.goto(`https://${host}/`);
     const bookingButton = await page.waitForSelector(bookingButtonSelector)
     await bookingButton.click()
 
