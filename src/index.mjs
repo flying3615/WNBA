@@ -32,6 +32,7 @@ import {
     isSuitableTime,
     readLines
 } from "./util.mjs";
+import {firefox} from "playwright-extra";
 
 // Weekdays: 16:00-22:00, +1, after 21:00
 // Weekends: 09:00-18:00, +2, after 16:00
@@ -79,6 +80,14 @@ export const login = async () => {
     const bookingButton = await page.waitForSelector(bookingButtonSelector)
     await bookingButton.click()
 
+    return await page.waitForSelector('.UserMenu-toggle');
+}
+
+export const login_google = async () => {
+    browser = await firefox.launch({ headless: inProductEnv });
+    page = await browser.newPage({ storageState: 'setup/storage-state.json' });
+
+    await page.goto('https://bookings.wnba.org.nz/bookings', {waitUntil: 'networkidle'});
     return await page.waitForSelector('.UserMenu-toggle');
 }
 
@@ -305,13 +314,15 @@ const bookingJob = async () => {
         const existingLockFile = checkLockFileExist();
         if (!existingLockFile) {
             // if there is no booking lock, then make a book
-            loggedIn = await login()
+            // loggedIn = await login()
+            loggedIn = await login_google()
             await bookingJob()
         } else {
             // if exists, but not equal as today's, means it's old one, delete it then do the job
             if (todayLockFileName !== existingLockFile) {
                 fs.unlinkSync(existingLockFile);
-                loggedIn = await login()
+                // loggedIn = await login()
+                loggedIn = await login_google()
                 await bookingJob()
             }
         }
