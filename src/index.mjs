@@ -167,31 +167,31 @@ const closeModals = async () => {
 
 const bookIt = async (orderedCourt) => {
     console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
-    for (const slot of orderedCourt.peakTimeSlots) {
-        // peak time booking
-        await slot.click();
 
-        await selectStadiumPassOption();
-        await selectPartners();
-        await acceptConditionAndConfirmBooking();
+    // peak time booking
+    if (orderedCourt.peakTimeSlots && orderedCourt.peakTimeSlots.length === 2) {
         try {
+            await orderedCourt.peakTimeSlots[0].click();
+            await orderedCourt.peakTimeSlots[1].click();
+            await selectStadiumPassOption();
+            await selectPartners();
+            await acceptConditionAndConfirmBooking();
             await closeModals();
         } catch (e) {
-            console.log("Closing modals happen error")
+            console.error(e)
         }
     }
 
     // off-peak booking
-    await orderedCourt.startOffPeakSlot.click();
-    await orderedCourt.endOffPeakSlot.click();
-
-    await selectStadiumPassOption();
-    await selectPartners();
-    await acceptConditionAndConfirmBooking();
     try {
+        await orderedCourt.startOffPeakSlot.click();
+        await orderedCourt.endOffPeakSlot.click();
+        await selectStadiumPassOption();
+        await selectPartners();
+        await acceptConditionAndConfirmBooking();
         await closeModals();
     } catch (e) {
-        console.log("Closing modals happen error")
+        console.error(e)
     }
 }
 
