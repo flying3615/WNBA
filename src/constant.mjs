@@ -28,6 +28,7 @@ export const bookingConditionCheckBox1 = "body > div.modal-wrapper.ModalWrapper.
 export const bookingConditionCheckBox2 = "body > div.modal-wrapper.ModalWrapper.ng-scope > div > flow-booking-confirm > div.Modal-body.Modal-body--lessPaddingBottom.overflowing > div.GroupSet.ng-scope > div > div.CheckBoxWrapper.ng-scope > check-box > label"
 
 export const confirmBookingBtnSelector = "body > div.modal-wrapper.ModalWrapper.ng-scope > div > flow-booking-confirm > div.Modal-footer > button-bar > div > div.ButtonGroup.ButtonGroup--primary.ng-scope > button.Button.Button--success.ng-animate-disabled"
+export const PinBookingOkBtn = "body > div:nth-child(16) > div > div.Modal-footer > button-bar > div > div > button"
 
 
 export const closeBookingModalBtnSelector = "body > div:nth-child(16) > div > div.Modal-header.success > div > i"

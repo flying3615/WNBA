@@ -22,7 +22,7 @@ import {
     confirmBookingBtnSelector,
     closeBookingModalBtnSelector,
     finalCloseBookingModalBtnSelector,
-    errorMessageShouldNotInModal
+    errorMessageShouldNotInModal, PinBookingOkBtn
 } from "./constant.mjs";
 import {
     calculatePlus30MinutesTime,
@@ -45,15 +45,14 @@ const day = date.getDate();
 
 const todayLockFileName = `${year}-${month}-${day}.lock`;
 
-const inProductEnv = false
-const DEBUGGING = true;
+const inProductEnv = false;
+const DEBUGGING = false;
 
 let loggedIn = null;
 
 // console.log with timestamp
 console.logCopy = console.log.bind(console);
-console.log = function(data)
-{
+console.log = function (data) {
     const currentDate = '[' + new Date().toString() + '] ';
     this.logCopy(currentDate, data);
 };
@@ -84,8 +83,8 @@ export const login = async () => {
 }
 
 export const login_google = async () => {
-    browser = await firefox.launch({ headless: inProductEnv });
-    page = await browser.newPage({ storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "../setup/storage-state.json" });
+    browser = await firefox.launch({headless: inProductEnv});
+    page = await browser.newPage({storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "../setup/storage-state.json"});
 
     await page.goto('https://bookings.wnba.org.nz/');
     const bookingButton = await page.waitForSelector(bookingButtonSelector)
@@ -156,6 +155,9 @@ const acceptConditionAndConfirmBooking = async () => {
 }
 
 const closeModals = async () => {
+    const pinBookingOkBtn = await page.waitForSelector(PinBookingOkBtn)
+    await pinBookingOkBtn.click();
+
     const finalCloseModalBtn = await page.waitForSelector(finalCloseBookingModalBtnSelector)
     await finalCloseModalBtn.click();
 
@@ -172,9 +174,9 @@ const bookIt = async (orderedCourt) => {
         await selectStadiumPassOption();
         await selectPartners();
         await acceptConditionAndConfirmBooking();
-        try{
+        try {
             await closeModals();
-        }catch (e) {
+        } catch (e) {
             console.log("Closing modals happen error")
         }
     }
@@ -186,9 +188,9 @@ const bookIt = async (orderedCourt) => {
     await selectStadiumPassOption();
     await selectPartners();
     await acceptConditionAndConfirmBooking();
-    try{
+    try {
         await closeModals();
-    }catch (e) {
+    } catch (e) {
         console.log("Closing modals happen error")
     }
 }
@@ -209,6 +211,7 @@ const checkAndBookSlots = async () => {
         let maxTimePerCourt = 0;
         let currentTime = 0
         let startTime = "";
+        let startOffPeakTime = "";
         let endTime = "";
         let startOffPeakSlot = null;
         let endOffPeakSlot = null;
@@ -221,20 +224,31 @@ const checkAndBookSlots = async () => {
             if (peopleBookedSlot || eventBookedSlot) {
                 currentTime = 0;
                 startTime = "";
+                startOffPeakTime = "";
                 startOffPeakSlot = null;
             } else {
                 const currentSlotTime = extractTime((await slot.textContent()).trim()); // output like: "16:00"
                 // Weekdays: 16:00-22:00, +1, after 21:00, peak time 21:00-22:00
                 // Weekends: 09:00-18:00, +2, after 16:00, peak time 16:00-17:00
                 if (currentSlotTime && isSuitableTime(currentSlotTime, dateObj)) {
-                    if (startTime === "") {
-                        if (isPeakTime(currentSlotTime, dateObj)) {
-                            peakTimeSlots.push(slot);
-                        } else {
-                            // the first off-peak start time
-                            startOffPeakSlot = slot;
+                    if (isPeakTime(currentSlotTime, dateObj)) {
+                        // put all peak time slots
+                        peakTimeSlots.push(slot);
+                        if (startTime === "") {
+                            // record the start time
+                            startTime = currentSlotTime
                         }
-                        startTime = currentSlotTime
+                    } else {
+                        if (startOffPeakTime === "") {
+                            // the first off-peak start time slot
+                            startOffPeakSlot = slot;
+                            // record the first off-peak time
+                            startOffPeakTime = currentSlotTime
+                            if (startTime === "") {
+                                // if still no start time, then it should be the first slot of off-peak time
+                                startTime = startOffPeakTime;
+                            }
+                        }
                     }
                     // 1 slot is 30 minutes
                     currentTime += 30;
