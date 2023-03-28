@@ -20,7 +20,6 @@ import {
     bookingConditionCheckBox1,
     bookingConditionCheckBox2,
     confirmBookingBtnSelector,
-    closeBookingModalBtnSelector,
     finalCloseBookingModalBtnSelector,
     errorMessageShouldNotInModal, PinBookingOkBtn
 } from "./constant.mjs";
@@ -163,8 +162,9 @@ const closeModals = async () => {
     const finalCloseModalBtn = await page.waitForSelector(finalCloseBookingModalBtnSelector)
     await finalCloseModalBtn.click();
 
-    const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
-    await closeModalBtn.click();
+    // throw exception sometimes
+    // const closeModalBtn = await page.waitForSelector(closeBookingModalBtnSelector)
+    // await closeModalBtn.click();
 }
 
 const bookIt = async (orderedCourt) => {
@@ -172,8 +172,12 @@ const bookIt = async (orderedCourt) => {
     // peak time booking
     if (orderedCourt.peakTimeSlots && orderedCourt.peakTimeSlots.length > 0) {
         try {
-            await orderedCourt.peakTimeSlots.shift().click(); //first slot
-            await orderedCourt.peakTimeSlots.pop().click(); // last slot
+            if(orderedCourt.peakTimeSlots.length===1) {
+                await orderedCourt.peakTimeSlots.shift().click(); //only one slot
+            } else {
+                await orderedCourt.peakTimeSlots.shift().click(); //first slot
+                await orderedCourt.peakTimeSlots.pop().click(); // last slot
+            }
             await selectStadiumPassOption();
             await selectPartners();
             await acceptConditionAndConfirmBooking();
@@ -193,6 +197,8 @@ const bookIt = async (orderedCourt) => {
         await closeModals();
     } catch (e) {
         console.error(e)
+    } finally {
+        createBookedLockFile();
     }
 }
 
@@ -298,7 +304,6 @@ const checkAndBookSlots = async () => {
                 return;
             }
             await bookIt(mostSuitableCourt)
-            createBookedLockFile();
         } else {
             console.log("There is no suitable court on this day, will try 1 hour later....")
         }
@@ -342,15 +347,15 @@ const bookingJob = async () => {
         const existingLockFile = checkLockFileExist();
         if (!existingLockFile) {
             // if there is no booking lock, then make a book
-            // loggedIn = await login()
-            loggedIn = await login_google()
+            loggedIn = await login()
+            // loggedIn = await login_google()
             await bookingJob()
         } else {
             // if exists, but not equal as today's, means it's old one, delete it then do the job
             if (todayLockFileName !== existingLockFile) {
                 fs.unlinkSync(existingLockFile);
-                // loggedIn = await login()
-                loggedIn = await login_google()
+                loggedIn = await login()
+                // loggedIn = await login_google()
                 await bookingJob()
             }
         }
