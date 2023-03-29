@@ -101,6 +101,7 @@ const getDate = async () => {
 }
 
 const selectStadiumPassOption = async () => {
+    console.log("1. select stadium pass option")
     const stadiumPassOption = await page.waitForSelector(stadiumPassRadioSelector);
     await stadiumPassOption.click();
 
@@ -119,6 +120,7 @@ const checkBookingError = async () => {
 }
 
 const selectPartners = async () => {
+    console.log("2. select partners")
     const partners = await readLines(inProductEnv ? "/home/ubuntu/hello-club/partners.txt" : "../partners.txt")
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
@@ -128,7 +130,7 @@ const selectPartners = async () => {
             await partner.click();
             console.log("add player " + name)
         } catch (e) {
-            console.error(`Couldn't select partner ${name}`);
+            console.error(`Couldn't select partner ${name}`, e);
         }
     }
 
@@ -139,6 +141,7 @@ const selectPartners = async () => {
 }
 
 const acceptConditionAndConfirmBooking = async () => {
+    console.log("3. accept T&Cs")
     const conditionCheckbox1 = await page.waitForSelector(bookingConditionCheckBox1)
     await conditionCheckbox1.click();
 
@@ -156,6 +159,7 @@ const acceptConditionAndConfirmBooking = async () => {
 }
 
 const closeModals = async () => {
+    console.log("4. close confirm modal")
     const pinBookingOkBtn = await page.waitForSelector(PinBookingOkBtn)
     await pinBookingOkBtn.click();
 
@@ -171,24 +175,25 @@ const bookIt = async (orderedCourt) => {
     console.log(`booking court ${orderedCourt.court} form ${orderedCourt.startTime} to ${orderedCourt.endTime}`)
     // peak time booking
     if (orderedCourt.peakTimeSlots && orderedCourt.peakTimeSlots.length > 0) {
-        try {
-            if(orderedCourt.peakTimeSlots.length===1) {
-                await orderedCourt.peakTimeSlots.shift().click(); //only one slot
-            } else {
-                await orderedCourt.peakTimeSlots.shift().click(); //first slot
-                await orderedCourt.peakTimeSlots.pop().click(); // last slot
+        // slot has to be clicked one by one
+        let index=0;
+        for (const slot of orderedCourt.peakTimeSlots) {
+            try {
+                console.log(`0. select peak time slot ${++index}`)
+                slot.click();
+                await selectStadiumPassOption();
+                await selectPartners();
+                await acceptConditionAndConfirmBooking();
+                await closeModals();
+            } catch (e) {
+                console.error(e)
             }
-            await selectStadiumPassOption();
-            await selectPartners();
-            await acceptConditionAndConfirmBooking();
-            await closeModals();
-        } catch (e) {
-            console.error(e)
         }
     }
 
     // off-peak booking
     try {
+        console.log("0. select off-peak time slots")
         await orderedCourt.startOffPeakSlot.click();
         await orderedCourt.endOffPeakSlot.click();
         await selectStadiumPassOption();
