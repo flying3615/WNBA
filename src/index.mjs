@@ -212,6 +212,14 @@ const checkAndBookSlots = async () => {
     await page.waitForTimeout(3000);
     // init dateObj
     await getDate();
+
+    const bookingWeekDay = dateObj.getDay()
+    // we don't book on Monday, Tuesday, Thursday & Friday
+    if([1,2,4,5].includes(bookingWeekDay)) {
+        console.log("We don't book on Monday, Tuesday, Thursday & Friday")
+        return;
+    }
+
     const bookingGrid = await page.waitForSelector(bookingGridSelector);
 
     const courts = await bookingGrid.$$(">div")
