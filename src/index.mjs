@@ -56,11 +56,8 @@ console.log = function (data) {
     this.logCopy(currentDate, data);
 };
 
-const host = (async () => {
-    await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
-})();
 
-export const login = async () => {
+export const login = async (host) => {
     browser = await chromium.launch({headless: inProductEnv});
     context = await browser.newContext();
     page = await context.newPage();
@@ -361,8 +358,9 @@ const bookingJob = async () => {
     try {
         const existingLockFile = checkLockFileExist();
         if (!existingLockFile) {
+            const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
             // if there is no booking lock, then make a book
-            loggedIn = await login()
+            loggedIn = await login(host)
             // loggedIn = await login_google()
             await bookingJob()
         } else {
