@@ -56,7 +56,9 @@ console.log = function (data) {
     this.logCopy(currentDate, data);
 };
 
-const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
+const host = (async () => {
+    await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
+})();
 
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
