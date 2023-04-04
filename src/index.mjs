@@ -56,7 +56,7 @@ console.log = function (data) {
     this.logCopy(currentDate, data);
 };
 
-const host = await readLines(inProductEnv ? "/home/ubuntu/hello-club/host.txt" : "../host.txt")
+const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
 
 export const login = async () => {
     browser = await chromium.launch({headless: inProductEnv});
@@ -66,7 +66,7 @@ export const login = async () => {
     await page.goto(`https://${host}/login/credentials`, {waitUntil: 'networkidle'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
-    const credentials = await readLines(inProductEnv ? "/home/ubuntu/hello-club/login.txt" : "../login.txt")
+    const credentials = await readLines(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt")
 
     const usernameInput = await page.$('input[name=username]');
     await usernameInput.type(credentials[0]);
@@ -85,7 +85,7 @@ export const login = async () => {
 
 export const login_google = async () => {
     browser = await firefox.launch({headless: inProductEnv});
-    page = await browser.newPage({storageState: inProductEnv ? "/home/ubuntu/hello-club/setup/storage-state.json" : "../setup/storage-state.json"});
+    page = await browser.newPage({storageState: inProductEnv ? "/home/ubuntu/WNBA/setup/storage-state.json" : "../setup/storage-state.json"});
 
     await page.goto(`https://${host}/`);
     const bookingButton = await page.waitForSelector(bookingButtonSelector)
@@ -121,7 +121,7 @@ const checkBookingError = async () => {
 
 const selectPartners = async () => {
     console.log("2. select partners")
-    const partners = await readLines(inProductEnv ? "/home/ubuntu/hello-club/partners.txt" : "../partners.txt")
+    const partners = await readLines(inProductEnv ? "/home/ubuntu/WNBA/partners.txt" : "../partners.txt")
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
         await partnerInput.type(name);
