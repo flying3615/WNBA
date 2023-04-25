@@ -282,7 +282,7 @@ const checkAndBookSlots = async () => {
         let oldFloor
         switch (index){
             case 0: oldFloor = 0; break // old rubber
-            case 1: oldFloor = -1; break // no rubber
+            case 1: oldFloor = 2; break // preferable
             case 2: oldFloor = 1; break
             case 3: oldFloor = 1; break
             case 4: oldFloor = 2; break // preferable
