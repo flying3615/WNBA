@@ -119,8 +119,8 @@ const checkBookingError = async () => {
 }
 
 const selectPartners = async () => {
-    console.log("2. select partners")
     const partners = await readLines(inProductEnv ? "/home/ubuntu/WNBA/partners.txt" : "../partners.txt")
+    console.log("2. select partners", partners)
     for (const name of partners) {
         const partnerInput = await page.waitForSelector(partnersInputSelector);
         await partnerInput.type(name);
