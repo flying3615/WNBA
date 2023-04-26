@@ -98,7 +98,7 @@ export const checkLockFileExist = () => {
         const files = fs.readdirSync(directory);
         const lockFiles = files.filter(file => file.endsWith('.lock'));
         if (lockFiles.length > 0) {
-            console.log(`Found ${lockFiles[0]} file in current directory, today has already booked`);
+            console.log(`Found ${lockFiles[0]} file in current directory`);
             return lockFiles[0];
         } else {
             console.log(`No .lock files found in ${directory}.`);

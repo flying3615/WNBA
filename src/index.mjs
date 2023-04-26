@@ -366,10 +366,14 @@ const bookingJob = async () => {
         } else {
             // if exists, but not equal as today's, means it's old one, delete it then do the job
             if (todayLockFileName !== existingLockFile) {
+                console.log("trying to book",todayLockFileName, existingLockFile)
                 fs.unlinkSync(existingLockFile);
                 loggedIn = await login()
                 // loggedIn = await login_google()
                 await bookingJob()
+
+            } else {
+                console.log("same date lock exists, today has been booked")
             }
         }
     } catch (e) {
