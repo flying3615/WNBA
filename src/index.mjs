@@ -213,9 +213,8 @@ const checkAndBookSlots = async () => {
     await getDate();
 
     const bookingWeekDay = dateObj.getDay()
-    // we don't book on Monday, Tuesday, Thursday & Friday
-    if ([1, 2, 4, 5].includes(bookingWeekDay)) {
-        console.log("We don't book on Monday, Tuesday, Thursday & Friday")
+    if ([1, 2, 3, 4].includes(bookingWeekDay)) {
+        console.log("We don't book on Monday, Tuesday, Wednesday, Thursday")
         return;
     }
 
@@ -357,8 +356,8 @@ const bookingJob = async () => {
 (async () => {
     try {
         const existingLockFile = checkLockFileExist();
+        const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
         if (!existingLockFile) {
-            const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
             // if there is no booking lock, then make a book
             loggedIn = await login(host)
             // loggedIn = await login_google()
@@ -368,10 +367,9 @@ const bookingJob = async () => {
             if (todayLockFileName !== existingLockFile) {
                 console.log("trying to book",todayLockFileName, existingLockFile)
                 fs.unlinkSync(existingLockFile);
-                loggedIn = await login()
+                loggedIn = await login(host)
                 // loggedIn = await login_google()
                 await bookingJob()
-
             } else {
                 console.log("same date lock exists, today has been booked")
             }
