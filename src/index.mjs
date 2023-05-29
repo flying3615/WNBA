@@ -208,13 +208,13 @@ const bookIt = async (orderedCourt) => {
 
 const checkAndBookSlots = async () => {
     // Wait for the network to finish loading
-    await page.waitForTimeout(3000);
+    await page.waitForLoadState('networkidle');
     // init dateObj
     await getDate();
 
     const bookingWeekDay = dateObj.getDay()
-    if ([1, 2, 3, 4].includes(bookingWeekDay)) {
-        console.log("We don't book on Monday, Tuesday, Wednesday, Thursday")
+    if ([1].includes(bookingWeekDay)) {
+        console.log("We don't book on Monday")
         return;
     }
 
@@ -324,7 +324,7 @@ const checkAndBookSlots = async () => {
 const goToNextDay = async () => {
     try {
         await page.waitForLoadState('networkidle');
-        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 5000})
+        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 1000})
         console.log('Go to next day.....');
         await nextDayLink.click()
     } catch (e) {
@@ -346,6 +346,7 @@ const bookingJob = async () => {
     for (let i = 0; i <= 7; i++) {
         if (i < 7) {
             // go to the latest day
+            console.log("skip the day " + i)
             await goToNextDay();
         } else {
             await checkAndBookSlots()
