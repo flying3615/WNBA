@@ -323,7 +323,8 @@ const checkAndBookSlots = async () => {
 
 const goToNextDay = async () => {
     try {
-        await page.waitForLoadState('networkidle');
+        await page.waitForLoadState('domcontentloaded');
+        console.log('Find the next day link.....');
         const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 1000})
         console.log('Go to next day.....');
         await nextDayLink.click()
