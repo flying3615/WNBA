@@ -62,7 +62,7 @@ export const login = async (host) => {
     context = await browser.newContext();
     page = await context.newPage();
 
-    await page.goto(`https://${host}/login/credentials`, {waitUntil: 'networkidle'});
+    await page.goto(`https://${host}/login/credentials`, {waitUntil: 'domcontentloaded'});
     await page.waitForSelector('text=Sign in', {state: 'visible'});
 
     const credentials = await readLines(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt")
@@ -208,9 +208,13 @@ const bookIt = async (orderedCourt) => {
 
 const checkAndBookSlots = async () => {
     // Wait for the network to finish loading
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // init dateObj
     await getDate();
+
+    // wait for Loading dismiss...
+    console.log("Wait for Loading dismiss...")
+    await page.waitForTimeout(5000)
 
     const bookingWeekDay = dateObj.getDay()
     if ([1].includes(bookingWeekDay)) {
@@ -325,7 +329,7 @@ const goToNextDay = async () => {
     try {
         await page.waitForLoadState('domcontentloaded');
         console.log('Find the next day link.....');
-        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 1000})
+        const nextDayLink = await page.waitForSelector(nextDayButton, {timeout: 5000})
         console.log('Go to next day.....');
         await nextDayLink.click()
     } catch (e) {
