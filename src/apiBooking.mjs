@@ -33,6 +33,10 @@ const courts = [
     "5aadd66e87c6b800048a290d", //court 1
 ]
 
+const courtOrder = [
+    2,3,4,5,6,1
+]
+
 
 export const inProductEnv = false;
 const apiHost = await readLines(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt")
@@ -119,9 +123,9 @@ const run = async () => {
 
         const startDate = `${formatDateString(sevenDayLater)}T${bookingSpan.startTime}:00.000Z`
         const endDate = `${formatDateString(sevenDayLater)}T${bookingSpan.endTime}:00.000Z`
-
-        for (const [index, court] of courts) {
-            console.log(`Booking for court ${index + 1} from ${startDate} to ${endDate}`)
+        let index = 0
+        for (const court of courts) {
+            console.log(`Booking for court ${courtOrder[index++]} from ${startDate} to ${endDate}`)
             const bookResponse = await bookCourt(court, startDate, endDate, token)
             const bookResult = await bookResponse.json()
 
@@ -153,7 +157,3 @@ if (!existingLockFile) {
         console.log("same date lock exists, today has been booked")
     }
 }
-
-
-
-
