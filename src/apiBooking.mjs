@@ -16,12 +16,13 @@ import fs from "fs";
 // Friday skip
 // Saturday 18:00pm-22:00pm
 // Saturday 19:00pm-22:00pm @ court 2
+// minus 12 hours, all afternoon
 const bookingTime = {
-    Tuesday: {startTime: "20:00", endTime: "23:00"},
-    Wednesday: {startTime: "21:00", endTime: "23:00"},
-    Thursday: {startTime: "19:30", endTime: "22:30"},
-    Saturday: {startTime: "18:00", endTime: "22:00"},
-    Sunday: {startTime: "19:00", endTime: "22:00"},
+    Tuesday: {startTime: "08:00", endTime: "11:30"},
+    Wednesday: {startTime: "09:30", endTime: "11:30"},
+    Thursday: {startTime: "07:30", endTime: "11:30"},
+    Saturday: {startTime: "07:00", endTime: "11:30"},
+    Sunday: {startTime: "07:00", endTime: "11:30"},
 }
 
 const courts = [
@@ -47,7 +48,7 @@ const playerIds = await readLines(inProductEnv ? "/home/ubuntu/WNBA/playerIds.tx
 function getFutureDate() {
     const today = new Date();
     const futureDate = new Date();
-    futureDate.setDate(today.getDate() + 6);
+    futureDate.setDate(today.getDate() + 7);
     return futureDate;
 }
 
