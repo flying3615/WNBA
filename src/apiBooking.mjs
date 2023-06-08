@@ -9,6 +9,14 @@ import fs from "fs";
 import {checkTimeAvailable, getBookingAndEventTimes} from "./findFreeTime.mjs";
 import {ApiHelper} from "./api/api.mjs";
 
+// console.log with timestamp
+console.logCopy = console.log.bind(console);
+console.log = function (data, data2) {
+    const currentDate = '[' + new Date().toString() + '] ';
+    data2 ? this.logCopy(currentDate, data, data2) : this.logCopy(currentDate, data);
+};
+
+
 // Monday skip
 // Tuesday 20 pm-23 pm @ court 6
 // Tuesday 20 pm-23 pm @ court 2
@@ -22,7 +30,7 @@ const bookingTime = {
     Tuesday: {startTime: "08:00", endTime: "11:30"},
     Wednesday: {startTime: "09:30", endTime: "11:30"},
     Thursday: {startTime: "07:30", endTime: "11:30"},
-    Friday: {startTime: "10:30", endTime: "11:30"},
+    Friday: {startTime: "10:00", endTime: "11:30"},
     Saturday: {startTime: "07:00", endTime: "11:30"},
     Sunday: {startTime: "07:00", endTime: "11:30"},
 }

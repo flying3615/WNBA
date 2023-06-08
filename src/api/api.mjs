@@ -92,7 +92,7 @@ export class ApiHelper {
             throw Error("Not login yet")
         }
 
-        const eventsResponse = await fetch(`https://${this.apiHost}/event?fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
+        const eventsResponse = await fetch(`https://${this.apiHost}/event?activity=5aadd66e87c6b800048a2908&isRemoved=false&fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
             "headers": {
                 "accept": "application/json, text/plain, */*",
                 "authorization": `Bearer ${this.token}`,
@@ -114,7 +114,7 @@ export class ApiHelper {
     }
 
     async getAllBookings(startDate, endDate) {
-        const bookingsResponse = await fetch(`https://${this.apiHost}/booking?fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
+        const bookingsResponse = await fetch(`https://${this.apiHost}/booking?activity=5aadd66e87c6b800048a2908&isRemoved=false&fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
             "headers": {
                 "accept": "application/json, text/plain, */*",
                 "authorization": `Bearer ${this.token}`,
