@@ -75,15 +75,9 @@ export const readLines = async (filePath) => {
     return lines;
 }
 
-export const createBookedLockFile = ()=>{
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const day = date.getDate();
-
-    const filename = `${year}-${month}-${day}.lock`;
-
-    fs.writeFile(filename, '', function(err) {
+export const createBookedLockFile = () => {
+    const filename = `${formatDateString(new Date())}.lock`;
+    fs.writeFile(filename, '', function (err) {
         if (err) {
             console.log(err);
         } else {
@@ -107,4 +101,23 @@ export const checkLockFileExist = () => {
     } catch (err) {
         console.error(`Failed to read directory ${directory}: ${err}`);
     }
+}
+
+export const getFutureDate = (daysLater) => {
+    const today = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + daysLater);
+    return futureDate;
+}
+
+export const formatDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export const getDayOfWeek = (date) => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return daysOfWeek[date.getDay()];
 }

@@ -1,80 +1,50 @@
 import _ from 'lodash';
 
-const getAllEvents = async (startDate, endDate, apiHost, token, host) => {
-    const eventsResponse = await fetch(`https://${apiHost}/event?fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
-        "headers": {
-            "accept": "application/json, text/plain, */*",
-            "authorization": `Bearer ${token}`,
-            "sec-ch-ua": "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Microsoft Edge\";v=\"114\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "x-api-version": "2023-05-31",
-            "x-club": "wnba",
-            "x-hostname": `${host}`,
-            "x-version": "a64316f",
-            "Referer": `https://${host}/`,
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        "body": null,
-        "method": "GET"
-    });
-
-    return await eventsResponse.json()
-
-}
-
-const getAllBookings = async (startDate, endDate, apiHost, token, host) => {
-    const bookingsResponse = await fetch(`https://${apiHost}/booking?fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
-        "headers": {
-            "accept": "application/json, text/plain, */*",
-            "authorization": `Bearer ${token}`,
-            "sec-ch-ua": "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Microsoft Edge\";v=\"114\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"Windows\"",
-            "x-api-version": "2023-05-31",
-            "x-club": "wnba",
-            "x-hostname": `${host}`,
-            "x-version": "a64316f",
-            "Referer": `https://${host}/`,
-            "Referrer-Policy": "strict-origin-when-cross-origin"
-        },
-        "body": null,
-        "method": "GET"
-    });
-    return await bookingsResponse.json()
-}
-
-export const getBookingAndEventTimes = async (startDate, endDate, apiHost, token, host) => {
+export const getBookingAndEventTimes = async (startDate, endDate, apiHelper) => {
     // const eventJsonString = await fs.readFile("../setup/events.json", "utf8")
     // const rawEvents = JSON.parse(eventJsonString);
-    const rawEvents = await getAllEvents(startDate, endDate, apiHost, token, host)
+    const rawEvents = await apiHelper.getAllEvents(startDate, endDate)
     let eventResult = []
     if (rawEvents.events) {
         eventResult = extractEventTimes(rawEvents.events)
+        console.log("All events today", JSON.stringify(eventResult,null,2))
     } else {
         console.log("No event found ", rawEvents)
     }
 
-
     // const bookingJsonString = await fs.readFile("../setup/bookings.json", "utf8")
     // const rawBookings = JSON.parse(bookingJsonString);
-    const rawBookings = await getAllBookings(startDate, endDate, apiHost, token, host)
+    const rawBookings = await apiHelper.getAllBookings(startDate, endDate)
     let bookingResult = []
     if (rawBookings.bookings) {
         bookingResult = extractBookingTimes(rawBookings.bookings)
+        console.log("All bookings today", JSON.stringify(bookingResult,null,2))
     } else {
         console.log("No booking found ", rawBookings)
     }
 
     return eventResult.map(eventObj => {
         const sameCourtForBooking = bookingResult.find(bookingObj => bookingObj.courtId === eventObj.courtId)
-        const peopleBookingTimes = sameCourtForBooking.bookingTimes ? sameCourtForBooking.bookingTimes : []
-        const eventBookingTimes = eventObj.bookingTimes ? eventObj.bookingTimes : []
+        const peopleBookingTimes = sameCourtForBooking?.bookingTimes ?? []
+        const eventBookingTimes = eventObj?.bookingTimes ?? []
         return {
             courtId: eventObj.courtId,
             bookingTimes: [...eventBookingTimes, ...peopleBookingTimes]
         }
     })
+}
+
+export const checkTimeAvailable = (courtId, ourStartDate, alreadyOccupiedTimesByCourtId) => {
+    if (alreadyOccupiedTimesByCourtId.length > 0) {
+        const occupiedTimePerCourt = alreadyOccupiedTimesByCourtId.find(occ => occ.courtId === courtId)
+        // check any of booking end time is later than our start time
+        const unAvailable = occupiedTimePerCourt.bookingTimes.some(bookedTime => {
+            return new Date(bookedTime.endDate).getTime() > new Date(ourStartDate).getTime()
+        })
+        return !unAvailable
+    }
+    console.log("Can't find already booked time")
+    return false;
 }
 
 
