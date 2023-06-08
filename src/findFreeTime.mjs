@@ -68,9 +68,11 @@ export const getBookingAndEventTimes = async (startDate, endDate, apiHost, token
 
     return eventResult.map(eventObj => {
         const sameCourtForBooking = bookingResult.find(bookingObj => bookingObj.courtId === eventObj.courtId)
+        const peopleBookingTimes = sameCourtForBooking.bookingTimes ? sameCourtForBooking.bookingTimes : []
+        const eventBookingTimes = eventObj.bookingTimes ? eventObj.bookingTimes : []
         return {
             courtId: eventObj.courtId,
-            bookingTimes: [...eventObj.bookingTimes, ...sameCourtForBooking.bookingTimes]
+            bookingTimes: [...eventBookingTimes, ...peopleBookingTimes]
         }
     })
 }
