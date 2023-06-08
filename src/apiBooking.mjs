@@ -7,6 +7,7 @@
 
 import {checkLockFileExist, createBookedLockFile, readLines} from "./util.mjs";
 import fs from "fs";
+import {getBookingAndEventTimes} from "./findFreeTime.mjs";
 
 // Monday skip
 // Tuesday 20 pm-23 pm @ court 6
@@ -35,20 +36,20 @@ const courts = [
 ]
 
 const courtOrder = [
-    2,3,4,5,6,1
+    2, 3, 4, 5, 6, 1
 ]
 
 
 export const inProductEnv = false;
-const apiHost = await readLines(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt")
-const host = await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt")
+const apiHost = (await readLines(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt"))[0]
+const host = (await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt"))[0]
 const credentials = await readLines(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt")
 const playerIds = await readLines(inProductEnv ? "/home/ubuntu/WNBA/playerIds.txt" : "../playerIds.txt")
 
-function getFutureDate() {
+function getFutureDate(daysLater) {
     const today = new Date();
     const futureDate = new Date();
-    futureDate.setDate(today.getDate() + 7);
+    futureDate.setDate(today.getDate() + daysLater);
     return futureDate;
 }
 
@@ -64,7 +65,8 @@ function formatDateString(date) {
     return `${year}-${month}-${day}`;
 }
 
-const sevenDayLater = getFutureDate();
+const sixDayLater = getFutureDate(6);
+const sevenDayLater = getFutureDate(7);
 const dayOfWeek = getDayOfWeek(sevenDayLater);
 const todayLockFileName = `${formatDateString(new Date())}.lock`;
 const login = async () => {
@@ -115,19 +117,32 @@ const bookCourt = async (court, startTime, endTime, token) => {
         "method": "POST"
     });
 }
+
+let alreadyOccupiedTimesByCourtId = []
 const run = async () => {
+    // login to get token
     const loginResponse = await login()
     const data = await loginResponse.json();
     if (loginResponse.ok) {
         const token = data.access_token;
+        // find out today already booked time span per courtId
+        alreadyOccupiedTimesByCourtId =
+            await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHost, token, host)
+        // get our trying book time span
         const bookingSpan = bookingTime[dayOfWeek]
 
         const startDate = `${formatDateString(sevenDayLater)}T${bookingSpan.startTime}:00.000Z`
         const endDate = `${formatDateString(sevenDayLater)}T${bookingSpan.endTime}:00.000Z`
         let index = 0
-        for (const court of courts) {
-            console.log(`Booking for court ${courtOrder[index++]} from ${startDate} to ${endDate}`)
-            const bookResponse = await bookCourt(court, startDate, endDate, token)
+        for (const courtId of courts) {
+            console.log(`Booking for court ${courtOrder[index++]} from ${new Date(startDate)} to ${new Date(endDate)}`)
+            // check if any endTime is later than our booking start time.
+            if (!checkTimeAvailable(courtId, startDate)) {
+                console.log("This court is not suitable for our time, try next one...")
+                continue
+            }
+
+            const bookResponse = await bookCourt(courtId, startDate, endDate, token)
             const bookResult = await bookResponse.json()
 
             if (bookResponse.ok && !!bookResult.bookedOn) {
@@ -157,4 +172,17 @@ if (!existingLockFile) {
     } else {
         console.log("same date lock exists, today has been booked")
     }
+}
+
+const checkTimeAvailable = (courtId, startDate) => {
+    if (alreadyOccupiedTimesByCourtId.length > 0) {
+        const occupiedTimePerCourt = alreadyOccupiedTimesByCourtId.find(occ => occ.courtId === courtId)
+        // check any of booking end time is later than our start time
+        const unAvailable = occupiedTimePerCourt.bookingTimes.some(bookedTime => {
+            return new Date(bookedTime.endDate).getTime() > new Date(startDate).getTime()
+        })
+        return !unAvailable
+    }
+    console.log("Can't find already booked time")
+    return false;
 }
