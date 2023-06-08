@@ -120,6 +120,14 @@ const bookCourt = async (court, startTime, endTime, token) => {
 
 let alreadyOccupiedTimesByCourtId = []
 const run = async () => {
+    // get our trying book time span
+    const bookingSpan = bookingTime[dayOfWeek]
+
+    if(!bookingSpan) {
+        console.log(`We don't book on ${dayOfWeek}`)
+        return
+    }
+
     // login to get token
     const loginResponse = await login()
     const data = await loginResponse.json();
@@ -128,8 +136,7 @@ const run = async () => {
         // find out today already booked time span per courtId
         alreadyOccupiedTimesByCourtId =
             await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHost, token, host)
-        // get our trying book time span
-        const bookingSpan = bookingTime[dayOfWeek]
+
 
         const startDate = `${formatDateString(sevenDayLater)}T${bookingSpan.startTime}:00.000Z`
         const endDate = `${formatDateString(sevenDayLater)}T${bookingSpan.endTime}:00.000Z`
