@@ -30,7 +30,7 @@ import {
     isPeakTime,
     isSuitableTime,
     readLines
-} from "./util.mjs";
+} from "../util.mjs";
 import {firefox} from "playwright-extra";
 
 // Weekdays: 16:00-22:00, +1, after 21:00

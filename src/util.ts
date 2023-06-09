@@ -2,18 +2,18 @@ import readline from "readline";
 import fs from "fs";
 import * as events from "events";
 
-export const extractTime = (str) => {
+export const extractTime = (str: string) => {
     const pattern = /\b\d{2}:\d{2}\b/;
     const match = str.match(pattern);
     if (match) {
         return match[0];
     } else {
-        new Error("wrong time format")
+        new Error("wrong time format");
     }
-}
+};
 
 
-export const calculatePlus30MinutesTime = (inputTime, dateObj) => {
+export const calculatePlus30MinutesTime = (inputTime: string, dateObj: Date) => {
     const inputMinutes = 30;
     const isoDate = dateObj.toISOString().slice(0, 10);
     const dateTime = new Date(`${isoDate}T${inputTime}:00`);
@@ -33,14 +33,14 @@ export const calculatePlus30MinutesTime = (inputTime, dateObj) => {
 
 // Format the hours and minutes as a string
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-}
+};
 
-export const isWeekend = (dateObj) => {
+export const isWeekend = (dateObj: Date) => {
     const dayOfWeek = dateObj.getDay();
     return dayOfWeek === 6 || dayOfWeek === 0;
-}
+};
 
-export const isSuitableTime = (currentSlotTime, dateObj) => {
+export const isSuitableTime = (currentSlotTime:string, dateObj:Date) => {
     const hour = parseInt(currentSlotTime.split(":")[0]);
     const minutes = parseInt(currentSlotTime.split(":")[1]);
     if (hour === 23 && minutes === 30) {
@@ -53,44 +53,46 @@ export const isSuitableTime = (currentSlotTime, dateObj) => {
         return true;
     }
     return !isWeekend(dateObj) && hour >= 21;
-}
+};
 
-export const isPeakTime = (currentSlotTime, dateObj) => {
+export const isPeakTime = (currentSlotTime: string, dateObj: Date) => {
     const hour = parseInt(currentSlotTime.split(":")[0]);
-    return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21
-}
+    return isWeekend(dateObj) && hour === 16 || !isWeekend(dateObj) && hour === 21;
+};
 
-export const readLines = async (filePath) => {
-    const lines = [];
+export const readLines = async (filePath: string) => {
+    const lines = [] as string[];
     const rl = readline.createInterface({
         input: fs.createReadStream(filePath),
     });
 
-    rl.on('line', (line) => {
-        lines.push(line)
+    rl.on("line", (line) => {
+        lines.push(line);
     });
 
-    await events.once(rl, 'close');
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    await events.once(rl, "close");
 
     return lines;
-}
+};
 
 export const createBookedLockFile = () => {
     const filename = `${formatDateString(new Date())}.lock`;
-    fs.writeFile(filename, '', function (err) {
+    fs.writeFile(filename, "", function (err) {
         if (err) {
             console.log(err);
         } else {
             console.log(`Booked lock file ${filename} created successfully.`);
         }
     });
-}
+};
 
 export const checkLockFileExist = () => {
-    const directory = './';
+    const directory = "./";
     try {
         const files = fs.readdirSync(directory);
-        const lockFiles = files.filter(file => file.endsWith('.lock'));
+        const lockFiles = files.filter(file => file.endsWith(".lock"));
         if (lockFiles.length > 0) {
             console.log(`Found ${lockFiles[0]} file in current directory`);
             return lockFiles[0];
@@ -101,23 +103,23 @@ export const checkLockFileExist = () => {
     } catch (err) {
         console.error(`Failed to read directory ${directory}: ${err}`);
     }
-}
+};
 
-export const getFutureDate = (daysLater) => {
+export const getFutureDate = (daysLater: number) => {
     const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + daysLater);
     return futureDate;
-}
+};
 
-export const formatDateString = (date) => {
+export const formatDateString = (date: Date) => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
-}
+};
 
-export const getDayOfWeek = (date) => {
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+export const getDayOfWeek = (date: Date) => {
+    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return daysOfWeek[date.getDay()];
-}
+};

@@ -1,5 +1,5 @@
 import { firefox } from 'playwright-extra';
-import {readLines} from "./util.mjs";
+import {readLines} from "../util.mjs";
 import {inProductEnv} from "./index.mjs";
 (async function globalSetup() {
     const host = await readLines(inProductEnv ? "/home/ubuntu/hello-club/host.txt" : "../host.txt")

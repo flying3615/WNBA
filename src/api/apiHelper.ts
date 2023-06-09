@@ -1,19 +1,27 @@
-import {readLines} from "../util.mjs";
-import {inProductEnv} from "../apiBooking.mjs";
+import fs from "fs";
 
 export class ApiHelper {
-    token;
-    constructor() {
-        return (async () => {
-            this.apiHost = (await readLines(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt"))[0]
-            this.host = (await readLines(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt"))[0]
-            this.credentials = await readLines(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt")
-            this.playerIds = await readLines(inProductEnv ? "/home/ubuntu/WNBA/playerIds.txt" : "../playerIds.txt")
-            return this
-        })()
+    private token: string;
+    private apiHost: string;
+    private host: string;
+    private credentials: string[];
+    private playerIds: string[];
+    constructor(inProductEnv:boolean) {
+        this.initialize(inProductEnv);
+    }
+
+    initialize(inProductEnv:boolean) {
+        this.apiHost = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt", "utf-8");
+        this.host = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt", "utf-8");
+        this.credentials = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt", "utf-8").split("\n");
+        this.playerIds = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/playerIds.txt" : "../playerIds.txt", "utf-8").split("\n");
     }
 
     async login() {
+        if(!this.credentials) {
+            throw Error("No credentials found...");
+        }
+
         const loginResponse = await fetch(`https://${this.apiHost}/auth/token`, {
             "headers": {
                 "accept": "application/json, text/plain, */*",
@@ -33,23 +41,29 @@ export class ApiHelper {
                 "Referer": `https://${this.host}/`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{\"username\":\"${this.credentials[0]}\",\"password\":\"${this.credentials[1]}\",\"clientId\":\"helloclub-client\",\"grantType\":\"password\"}`,
+            "body": `{"username":"${this.credentials[0]}","password":"${this.credentials[1]}","clientId":"helloclub-client","grantType":"password"}`,
             "method": "POST"
         });
 
-        const data = await loginResponse.json()
+        const data = await loginResponse.json();
         if (loginResponse.ok) {
             this.token = data.access_token;
-            return true
+            return true;
         }
-        return false
+        return false;
     }
 
-    async bookCourt(court, startTime, endTime) {
+    async bookCourt(court:string, startTime:string, endTime:string) {
 
         if(!this.token) {
-            throw Error("Not login yet")
+            throw Error("Not login yet");
         }
+
+        if(!this.playerIds) {
+            throw Error("No player found");
+        }
+
+        const playerList = this.playerIds.map(p=>`"${p}"`).join(",");
 
         const bookResponse =  await fetch(`https://${this.apiHost}/booking`, {
             "headers": {
@@ -70,26 +84,26 @@ export class ApiHelper {
                 "Referer": `https://${this.host}/`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{\"members\":[\"${this.playerIds[0]}\",\"${this.playerIds[1]}\"],\"area\":\"${court}\",\"activity\":\"5aadd66e87c6b800048a2908\",\"startDate\":\"${startTime}\",\"endDate\":\"${endTime}\",\"mode\":\"615fcc5a03fdff65ad87ada7\",\"recurrence\":null,\"visitors\":[],\"sendConfirmationEmail\":true,\"forOthers\":false,\"reminderTime\":30,\"sendReminderEmail\":true}`,
+            "body": `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"615fcc5a03fdff65ad87ada7","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`,
             "method": "POST"
         });
 
-        const bookResult = await bookResponse.json()
+        const bookResult = await bookResponse.json();
 
         if(bookResponse.ok && !!bookResult.bookedOn) {
-            console.log(`Booking successfully, booked on ${bookResult.bookedOn}`)
-            return true
+            console.log(`Booking successfully, booked on ${bookResult.bookedOn}`);
+            return true;
         } else {
-            console.log(`Booking Unsuccessfully, ${bookResult.message}`)
-            return false
+            console.log(`Booking Unsuccessfully, ${bookResult.message}`);
+            return false;
         }
     }
 
 
-    async getAllEvents(startDate, endDate) {
+    async getAllEvents(startDate: string, endDate: string) {
 
         if(!this.token) {
-            throw Error("Not login yet")
+            throw Error("Not login yet");
         }
 
         const eventsResponse = await fetch(`https://${this.apiHost}/event?activity=5aadd66e87c6b800048a2908&isRemoved=false&fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
@@ -110,10 +124,10 @@ export class ApiHelper {
             "method": "GET"
         });
 
-        return await eventsResponse.json()
+        return await eventsResponse.json();
     }
 
-    async getAllBookings(startDate, endDate) {
+    async getAllBookings(startDate: string, endDate: string) {
         const bookingsResponse = await fetch(`https://${this.apiHost}/booking?activity=5aadd66e87c6b800048a2908&isRemoved=false&fromDate=${startDate}T12:00:00.000Z&toDate=${endDate}T11:59:59.999Z`, {
             "headers": {
                 "accept": "application/json, text/plain, */*",
@@ -131,7 +145,7 @@ export class ApiHelper {
             "body": null,
             "method": "GET"
         });
-        return await bookingsResponse.json()
+        return await bookingsResponse.json();
     }
 
 }
