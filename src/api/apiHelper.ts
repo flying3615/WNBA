@@ -38,7 +38,7 @@ export class ApiHelper {
                 "x-hostname": `${this.host}`,
                 "x-version": "7acb8ea",
                 "cookie": "refreshToken.wnba=f0d0c52d86d1ee43568e78566bf1198b9dc3c6944d2e9ab5",
-                "Referer": `https://${this.host}/`,
+                "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": `{"username":"${this.credentials[0]}","password":"${this.credentials[1]}","clientId":"helloclub-client","grantType":"password"}`,
@@ -81,7 +81,7 @@ export class ApiHelper {
                 "x-club": "wnba",
                 "x-hostname": `${this.host}`,
                 "x-version": "7acb8ea",
-                "Referer": `https://${this.host}/`,
+                "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"615fcc5a03fdff65ad87ada7","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`,
@@ -117,7 +117,7 @@ export class ApiHelper {
                 "x-club": "wnba",
                 "x-hostname": `${this.host}`,
                 "x-version": "a64316f",
-                "Referer": `https://${this.host}/`,
+                "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": null,
@@ -139,7 +139,7 @@ export class ApiHelper {
                 "x-club": "wnba",
                 "x-hostname": `${this.host}`,
                 "x-version": "a64316f",
-                "Referer": `https://${this.host}/`,
+                "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
             "body": null,
