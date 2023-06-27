@@ -63,7 +63,7 @@ export class ApiHelper {
             throw Error("No player found");
         }
 
-        const playerList = this.playerIds.map(p=>`"${p}"`).join(",");
+        const playerList = this.playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
 
         const bookResponse =  await fetch(`https://${this.apiHost}/booking`, {
             "headers": {
