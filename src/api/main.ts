@@ -37,17 +37,32 @@ const bookingTime: BookingTime = {
     Sunday: {startTime: "07:00", endTime: "11:30"},
 };
 
-const courts = [
-    "5aadd66e87c6b800048a290e", //court 2
-    "5aadd66e87c6b800048a290f", //court 3
-    "5aadd66e87c6b800048a2910", //court 4
-    "5aadd66e87c6b800048a2911", //court 5
-    "5aadd66e87c6b800048a2912", //court 6
-    "5aadd66e87c6b800048a290d", //court 1
+const courtsEvaluator = [
+    {
+        courtId: "5aadd66e87c6b800048a290e",//court 2
+        value: 2,
+    },
+    {
+        courtId: "5aadd66e87c6b800048a290f", //court 3
+        value: 3,
+    },
+    {
+        courtId: "5aadd66e87c6b800048a2910", //court 4
+        value: 4,
+    },
+    {
+        courtId: "5aadd66e87c6b800048a2911", //court 5
+        value: 5,
+    },
+    {
+        courtId: "5aadd66e87c6b800048a2912", //court 6
+        value: -6,
+    },
+    {
+        courtId: "5aadd66e87c6b800048a290d", //court 1
+        value: -1,
+    }
 ];
-
-
-const courtOrder = [2, 3, 4, 5, 6, 1];
 
 export const inProductEnv = false;
 
@@ -86,7 +101,10 @@ const run = async () => {
         
         // find the earliest end time among all courts
         const earliestEndTimePerCourt = latestEndingTimePerCourt.sort((a, b) => {
-            return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime();
+            const courtAWeight = courtsEvaluator.find((value) => value.courtId === a.courtId).value;
+            const courtBWeight = courtsEvaluator.find((value) => value.courtId === b.courtId).value;
+            // if same end time, then sort by court weight desc
+            return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime() || courtBWeight - courtAWeight;
         })[0];
 
         const ourStartDate = earliestEndTimePerCourt.latestEndTime;

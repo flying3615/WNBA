@@ -14,7 +14,7 @@ export const getBookingAndEventTimes = async (startDate: string, endDate: string
     let eventResult:BookedTimeByCourt[] = [];
     if (rawEvents.events) {
         eventResult = extractEventTimes(rawEvents.events);
-        console.log("All events today", JSON.stringify(eventResult, null, 2));
+        // console.log("All events today", JSON.stringify(eventResult, null, 2));
     } else {
         console.log("No event found ", rawEvents);
     }
@@ -25,7 +25,7 @@ export const getBookingAndEventTimes = async (startDate: string, endDate: string
     let bookingResult: BookedTimeByCourt[];
     if (rawBookings.bookings) {
         bookingResult = extractBookingTimes(rawBookings.bookings);
-        console.log("All bookings today", JSON.stringify(bookingResult, null, 2));
+        // console.log("All bookings today", JSON.stringify(bookingResult, null, 2));
     } else {
         console.log("No booking found ", rawBookings);
     }
