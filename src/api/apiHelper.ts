@@ -1,4 +1,5 @@
 import fs from "fs";
+import {courtsEvaluator} from "./main";
 
 export class ApiHelper {
     private token: string;
@@ -91,7 +92,8 @@ export class ApiHelper {
         const bookResult = await bookResponse.json();
 
         if(bookResponse.ok && !!bookResult.bookedOn) {
-            console.log(`Booking successfully, booked on ${bookResult.bookedOn}`);
+            const courtNumber = Math.abs(courtsEvaluator.find((value) => value.courtId === court).value) ;
+            console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn}`);
             return true;
         } else {
             console.log(`Booking Unsuccessfully, ${bookResult.message}`);

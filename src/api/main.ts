@@ -37,7 +37,7 @@ const bookingTime: BookingTime = {
     Sunday: {startTime: "07:00", endTime: "11:30"},
 };
 
-const courtsEvaluator = [
+export const courtsEvaluator = [
     {
         courtId: "5aadd66e87c6b800048a290e",//court 2
         value: 2,
