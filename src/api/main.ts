@@ -3,7 +3,7 @@ import fs from "fs";
 
 import {checkLockFileExist, createBookedLockFile, formatDateString, getDayOfWeek, getFutureDate} from "../util";
 import {ApiHelper} from "./apiHelper";
-import {checkTimeAvailable, getBookingAndEventTimes} from "./bookTimeChecker";
+import {getBookingAndEventTimes} from "./bookTimeChecker";
 
 // console.log with timestamp
 // console.logCopy = console.log.bind(console);
@@ -11,7 +11,6 @@ import {checkTimeAvailable, getBookingAndEventTimes} from "./bookTimeChecker";
 //     const currentDate = '[' + new Date().toString() + '] ';
 //     data2 ? this.logCopy(currentDate, data, data2) : this.logCopy(currentDate, data);
 // };
-
 
 // Monday skip
 // Tuesday 20 pm-23 pm @ court 6
@@ -29,12 +28,11 @@ type BookingTime = {
     };
 };
 
-
 const bookingTime: BookingTime = {
     Tuesday: {startTime: "08:00", endTime: "11:30"},
     Wednesday: {startTime: "09:30", endTime: "11:30"},
     Thursday: {startTime: "07:30", endTime: "11:30"},
-    Friday: {startTime: "10:00", endTime: "11:30"},
+    Friday: {startTime: "10:00", endTime: "12:00"},
     Saturday: {startTime: "07:00", endTime: "11:30"},
     Sunday: {startTime: "07:00", endTime: "11:30"},
 };
@@ -47,6 +45,7 @@ const courts = [
     "5aadd66e87c6b800048a2912", //court 6
     "5aadd66e87c6b800048a290d", //court 1
 ];
+
 
 const courtOrder = [2, 3, 4, 5, 6, 1];
 
@@ -72,20 +71,31 @@ const run = async () => {
         const alreadyOccupiedTimesByCourtId =
             await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
 
-        const ourStartDate = `${formatDateString(sevenDayLater)}T${ourBookingSpan.startTime}:00.000Z`;
-        const ourEndDate = `${formatDateString(sevenDayLater)}T${ourBookingSpan.endTime}:00.000Z`;
-        let index = 0;
-        for (const courtId of courts) {
-            console.log(`Booking for court ${courtOrder[index++]} from ${new Date(ourStartDate)} to ${new Date(ourEndDate)}`);
-            // check if any endTime is later than our booking start time.
-            if (!checkTimeAvailable(courtId, ourStartDate, alreadyOccupiedTimesByCourtId)) {
-                console.log("This court is not suitable for our time, try next one...");
-                continue;
-            }
-            if (await apiHelper.bookCourt(courtId, ourStartDate, ourEndDate)) {
-                createBookedLockFile();
-                break;
-            }
+      
+        const latestEndingTimePerCourt = alreadyOccupiedTimesByCourtId.map((value) => {
+            // find the booking time with the latest end time for a specific court
+            const sortedTime = value.bookingTimes.sort((a, b) => {
+                return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
+            });
+            console.log(`Court ${value.courtId} has latest end book time: ${sortedTime[0].endDate}`);
+            return {
+                courtId: value.courtId,
+                latestEndTime: sortedTime[0].endDate,
+            };
+        });
+        
+        // find the earliest end time among all courts
+        const earliestEndTimePerCourt = latestEndingTimePerCourt.sort((a, b) => {
+            return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime();
+        })[0];
+
+        const ourStartDate = earliestEndTimePerCourt.latestEndTime;
+        const ourCourtId = earliestEndTimePerCourt.courtId;
+        const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
+        if (await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate)) {
+            createBookedLockFile();
+        } else {
+            console.log("Booking Unsuccessful");
         }
     } else {
         console.log("Login Unsuccessful");
