@@ -92,8 +92,8 @@ export class ApiHelper {
         const bookResult = await bookResponse.json();
 
         if(bookResponse.ok && !!bookResult.bookedOn) {
-            const courtNumber = Math.abs(courtsEvaluator.find((value) => value.courtId === court).value) ;
-            console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn}`);
+            const courtNumber = Math.abs(courtsEvaluator[court]) ;
+            console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn} from ${startTime} to ${endTime}`);
             return true;
         } else {
             console.log(`Booking Unsuccessfully, ${bookResult.message}`);

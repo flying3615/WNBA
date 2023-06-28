@@ -32,32 +32,14 @@ enum bookingTime {
     Sunday,
 }
 
-export const courtsEvaluator = [
-    {
-        courtId: "5aadd66e87c6b800048a290e",//court 2
-        value: 2,
-    },
-    {
-        courtId: "5aadd66e87c6b800048a290f", //court 3
-        value: 3,
-    },
-    {
-        courtId: "5aadd66e87c6b800048a2910", //court 4
-        value: 4,
-    },
-    {
-        courtId: "5aadd66e87c6b800048a2911", //court 5
-        value: 5,
-    },
-    {
-        courtId: "5aadd66e87c6b800048a2912", //court 6
-        value: -6,
-    },
-    {
-        courtId: "5aadd66e87c6b800048a290d", //court 1
-        value: -1,
-    }
-];
+export const courtsEvaluator = {
+    "5aadd66e87c6b800048a290e":2,
+    "5aadd66e87c6b800048a290f":3,
+    "5aadd66e87c6b800048a2910":4,
+    "5aadd66e87c6b800048a2911":5,
+    "5aadd66e87c6b800048a2912":-6,
+    "5aadd66e87c6b800048a290d":-1,
+};
 
 export const inProductEnv = false;
 
@@ -85,7 +67,7 @@ const run = async () => {
             const sortedTime = value.bookingTimes.sort((a, b) => {
                 return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
             });
-            console.log(`Court ${value.courtId} has latest end book time: ${sortedTime[0].endDate}`);
+            console.log(`Court ${Math.abs(courtsEvaluator[value.courtId])} has latest end book time: ${sortedTime[0].endDate}`);
             return {
                 courtId: value.courtId,
                 latestEndTime: sortedTime[0].endDate,
@@ -94,8 +76,9 @@ const run = async () => {
         
         // find the earliest end time among all courts
         const earliestEndTimePerCourt = latestEndingTimePerCourt.sort((a, b) => {
-            const courtAWeight = courtsEvaluator.find((value) => value.courtId === a.courtId).value;
-            const courtBWeight = courtsEvaluator.find((value) => value.courtId === b.courtId).value;
+            const courtAWeight = courtsEvaluator[a.courtId];
+            const courtBWeight = courtsEvaluator[b.courtId];
+
             // if same end time, then sort by court weight desc
             return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime() || courtBWeight - courtAWeight;
         })[0];
