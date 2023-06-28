@@ -21,21 +21,16 @@ import {getBookingAndEventTimes} from "./bookTimeChecker";
 // Saturday 18:00pm-22:00pm
 // Saturday 19:00pm-22:00pm @ court 2
 // minus 12 hours, all afternoon
-type BookingTime = {
-    [key: string]: {
-        startTime: string;
-        endTime: string;
-    };
-};
 
-const bookingTime: BookingTime = {
-    Tuesday: {startTime: "08:00", endTime: "11:30"},
-    Wednesday: {startTime: "09:30", endTime: "11:30"},
-    Thursday: {startTime: "07:30", endTime: "11:30"},
-    Friday: {startTime: "10:00", endTime: "12:00"},
-    Saturday: {startTime: "07:00", endTime: "11:30"},
-    Sunday: {startTime: "07:00", endTime: "11:30"},
-};
+
+enum bookingTime {
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+    Sunday,
+}
 
 export const courtsEvaluator = [
     {
@@ -71,10 +66,8 @@ const sevenDayLater = getFutureDate(7);
 const dayOfWeek = getDayOfWeek(sevenDayLater);
 
 const run = async () => {
-    // get our trying book time span
-    const ourBookingSpan = bookingTime[dayOfWeek];
 
-    if (!ourBookingSpan) {
+    if (!bookingTime[dayOfWeek]) {
         console.log(`We don't book on ${dayOfWeek}`);
         return;
     }
@@ -112,8 +105,6 @@ const run = async () => {
         const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
         if (await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate)) {
             createBookedLockFile();
-        } else {
-            console.log("Booking Unsuccessful");
         }
     } else {
         console.log("Login Unsuccessful");
