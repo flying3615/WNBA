@@ -47,6 +47,11 @@ const sixDayLater = getFutureDate(6);
 const sevenDayLater = getFutureDate(7);
 const dayOfWeek = getDayOfWeek(sevenDayLater);
 
+enum Booker {
+    Kafka = "KK",
+    "Tomcat" = "TT",
+}
+
 const run = async () => {
 
     if (!bookingTime[dayOfWeek]) {
@@ -56,11 +61,10 @@ const run = async () => {
 
     const apiHelper = await new ApiHelper(inProductEnv);
 
-    if (await apiHelper.login()) {
+    if (await apiHelper.login(Booker.Kafka)) {
         // find out today already booked time span per courtId
         const alreadyOccupiedTimesByCourtId =
             await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
-
       
         const latestEndingTimePerCourt = alreadyOccupiedTimesByCourtId.map((value) => {
             // find the booking time with the latest end time for a specific court
@@ -86,8 +90,29 @@ const run = async () => {
         const ourStartDate = earliestEndTimePerCourt.latestEndTime;
         const ourCourtId = earliestEndTimePerCourt.courtId;
         const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
-        if (await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate)) {
-            createBookedLockFile();
+
+        const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
+        const diffHours = timeDiff / (1000 * 3600);
+
+        if (diffHours > 2) {
+            console.log("Booking span is more than 2 hours.");
+            //get 2 hours later of time from ourStartDate
+            const ourMidDateObj = new Date(ourStartDate);
+            ourMidDateObj.setHours(ourMidDateObj.getHours() + 2);
+            const ourMidDate = ourMidDateObj.toISOString();
+            console.log("Booking first 2 hours by Kafka....");
+            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate);
+            console.log("Booking first 2 hours by Tomcat....");
+            if (await apiHelper.login(Booker.Tomcat) &&
+                await apiHelper.bookCourt(ourCourtId, ourMidDate, ourEndDate)) {
+                createBookedLockFile();
+            }
+            return;
+        } else {
+            console.log("Booking span is less or equal to 2 hours.");
+            if (await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate)) {
+                createBookedLockFile();
+            }
         }
     } else {
         console.log("Login Unsuccessful");

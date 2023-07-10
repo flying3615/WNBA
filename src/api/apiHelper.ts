@@ -5,22 +5,33 @@ export class ApiHelper {
     private token: string;
     private apiHost: string;
     private host: string;
-    private credentials: string[];
     private playerIds: string[];
+    
+    private inProductEnv: boolean;
     constructor(inProductEnv:boolean) {
+        this.inProductEnv = inProductEnv;
         this.initialize(inProductEnv);
     }
 
     initialize(inProductEnv:boolean) {
         this.apiHost = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt", "utf-8");
         this.host = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt", "utf-8");
-        this.credentials = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/login.txt" : "../login.txt", "utf-8").split("\n");
         this.playerIds = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/playerIds.txt" : "../playerIds.txt", "utf-8").split("\n");
     }
 
-    async login() {
-        if(!this.credentials) {
-            throw Error("No credentials found...");
+    async login(booker:string) {
+
+        let credentials: string[];
+        if(booker == "KK") {
+            credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginKK.txt" : "../loginKK.txt", "utf-8").split("\n");
+        }
+
+        if(booker == "TT") {
+            credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginTT.txt" : "../loginTT.txt", "utf-8").split("\n");
+        }
+        
+        if(!credentials|| credentials.length < 2) {
+            throw Error("No credentials found or invalid credentials...");
         }
 
         const loginResponse = await fetch(`https://${this.apiHost}/auth/token`, {
@@ -42,7 +53,7 @@ export class ApiHelper {
                 "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{"username":"${this.credentials[0]}","password":"${this.credentials[1]}","clientId":"helloclub-client","grantType":"password"}`,
+            "body": `{"username":"${credentials[0]}","password":"${credentials[1]}","clientId":"helloclub-client","grantType":"password"}`,
             "method": "POST"
         });
 
@@ -91,12 +102,13 @@ export class ApiHelper {
 
         const bookResult = await bookResponse.json();
 
+        const courtNumber = Math.abs(courtsEvaluator[court]);
         if(bookResponse.ok && !!bookResult.bookedOn) {
-            const courtNumber = Math.abs(courtsEvaluator[court]) ;
             console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn} from ${startTime} to ${endTime}`);
             return true;
         } else {
-            console.log(`Booking Unsuccessfully, ${bookResult.message}`);
+            // TODO send email
+            console.log(`Booking Unsuccessfully, failed to booked court ${courtNumber} from ${startTime} to ${endTime} due to ${bookResult.message}`);
             return false;
         }
     }
