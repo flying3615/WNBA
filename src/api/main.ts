@@ -49,12 +49,12 @@ const dayOfWeek = getDayOfWeek(sevenDayLater);
 
 enum Booker {
     Kafka = "KK",
-    "Tomcat" = "TT",
+    Tomcat = "TT",
 }
 
 const run = async () => {
 
-    if (!bookingTime[dayOfWeek]) {
+    if (bookingTime[dayOfWeek] == undefined) {
         console.log(`We don't book on ${dayOfWeek}`);
         return;
     }
