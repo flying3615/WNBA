@@ -16,7 +16,6 @@ export class ApiHelper {
     initialize(inProductEnv:boolean) {
         this.apiHost = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt", "utf-8");
         this.host = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt", "utf-8");
-        this.playerIds = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/playerIds.txt" : "../playerIds.txt", "utf-8").split("\n");
     }
 
     async login(booker:string) {
@@ -24,10 +23,12 @@ export class ApiHelper {
         let credentials: string[];
         if(booker == "KK") {
             credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginKK.txt" : "../loginKK.txt", "utf-8").split("\n");
+            this.playerIds = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/playerIdsKK.txt" : "../playerIdsKK.txt", "utf-8").split("\n");
         }
 
         if(booker == "TT") {
             credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginTT.txt" : "../loginTT.txt", "utf-8").split("\n");
+            this.playerIds = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/playerIdsTT.txt" : "../playerIdsTT.txt", "utf-8").split("\n");
         }
         
         if(!credentials|| credentials.length < 2) {
@@ -74,6 +75,8 @@ export class ApiHelper {
         if(!this.playerIds) {
             throw Error("No player found");
         }
+
+        //TODO kafka and tomcat specific case
 
         const playerList = this.playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
 

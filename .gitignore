@@ -3,6 +3,8 @@ loginTT.txt
 loginKK.txt
 host.txt
 api.txt
-playerIds.txt
+playerIdsKK.txt
+playerIdsTT.txt
 /setup/*
 /build
+*.iml
