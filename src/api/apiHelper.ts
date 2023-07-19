@@ -68,6 +68,9 @@ export class ApiHelper {
 
     async bookCourt(court:string, startTime:string, endTime:string) {
 
+        const singleMode = "615fcc5a03fdff65ad87ada7";
+        const doubleMode = "615fcc9db35243a097257517";
+
         if(!this.token) {
             throw Error("Not login yet");
         }
@@ -79,6 +82,8 @@ export class ApiHelper {
         //TODO kafka and tomcat specific case
 
         const playerList = this.playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
+
+        const playMode = this.playerIds.filter(p=>p!=="").length > 2 ? doubleMode : singleMode;
 
         const bookResponse =  await fetch(`https://${this.apiHost}/booking`, {
             "headers": {
@@ -99,7 +104,7 @@ export class ApiHelper {
                 "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"615fcc5a03fdff65ad87ada7","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`,
+            "body": `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`,
             "method": "POST"
         });
 
