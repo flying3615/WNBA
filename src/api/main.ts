@@ -1,9 +1,21 @@
 
 import fs from "fs";
-
+import { resolve } from 'path';
 import {checkLockFileExist, createBookedLockFile, formatDateString, getDayOfWeek, getFutureDate} from "../util";
 import {ApiHelper} from "./apiHelper";
 import {getBookingAndEventTimes} from "./bookTimeChecker";
+import { load } from 'ts-dotenv';
+
+const env = load({
+    TOKEN: String,
+    PLAYER_IDS: String,
+    HOSTNAME: String,
+    API_HOSTNAME: String,
+},{
+    path: resolve(__dirname, '.env'),
+});
+
+
 
 // console.log with timestamp
 // console.logCopy = console.log.bind(console);
@@ -58,6 +70,16 @@ const run = async () => {
         console.log(`We don't book on ${dayOfWeek}`);
         return;
     }
+
+    // TODO read token from env, if token not exist, try username and password login
+    // https://www.npmjs.com/package/ts-dotenv
+    // else directly use token to book
+    // const token = process.env.TOKEN;
+    // if (token) {
+    //     console.log(`Token found, use token to book.`);
+    // } else {
+    //     console.log(`Token not found, use username and password to login.`);
+    // }
 
     const apiHelper = await new ApiHelper(inProductEnv);
 
