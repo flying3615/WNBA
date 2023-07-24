@@ -1,10 +1,5 @@
 partners.txt
-loginTT.txt
-loginKK.txt
-host.txt
-api.txt
-playerIdsKK.txt
-playerIdsTT.txt
 /setup/*
 /build
 *.iml
+**/.env

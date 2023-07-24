@@ -1,20 +1,22 @@
-
 import fs from "fs";
-import { resolve } from 'path';
+import {resolve} from "path";
 import {checkLockFileExist, createBookedLockFile, formatDateString, getDayOfWeek, getFutureDate} from "../util";
 import {ApiHelper} from "./apiHelper";
 import {getBookingAndEventTimes} from "./bookTimeChecker";
-import { load } from 'ts-dotenv';
+import {load} from "ts-dotenv";
+
+console.log(__dirname);
 
 const env = load({
     TOKEN: String,
     PLAYER_IDS: String,
     HOSTNAME: String,
     API_HOSTNAME: String,
-},{
-    path: resolve(__dirname, '.env'),
+    KAFKA_NAME: String,
+    KAFKA_PASSWORD: String,
+}, {
+    path: resolve(__dirname, ".env"),
 });
-
 
 
 // console.log with timestamp
@@ -45,23 +47,51 @@ enum bookingTime {
 }
 
 export const courtsEvaluator = {
-    "5aadd66e87c6b800048a290e":2,
-    "5aadd66e87c6b800048a290f":3,
-    "5aadd66e87c6b800048a2910":4,
-    "5aadd66e87c6b800048a2911":5,
-    "5aadd66e87c6b800048a2912":-6,
-    "5aadd66e87c6b800048a290d":-1,
+    "5aadd66e87c6b800048a290e": 2,
+    "5aadd66e87c6b800048a290f": 3,
+    "5aadd66e87c6b800048a2910": 4,
+    "5aadd66e87c6b800048a2911": 5,
+    "5aadd66e87c6b800048a2912": -6,
+    "5aadd66e87c6b800048a290d": -1,
 };
-
-export const inProductEnv = false;
 
 const sixDayLater = getFutureDate(6);
 const sevenDayLater = getFutureDate(7);
 const dayOfWeek = getDayOfWeek(sevenDayLater);
 
-enum Booker {
-    Kafka = "KK",
-    Tomcat = "TT",
+async function findPlayTimeSpan(apiHelper: ApiHelper) {
+    // find out today already booked time span per courtId
+    const alreadyOccupiedTimesByCourtId =
+        await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
+
+    const latestEndingTimePerCourt = alreadyOccupiedTimesByCourtId.map((value) => {
+        // find the booking time with the latest end time for a specific court
+        const sortedTime = value.bookingTimes.sort((a, b) => {
+            return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
+        });
+        console.log(`Court ${Math.abs(courtsEvaluator[value.courtId])} has latest end book time: ${sortedTime[0].endDate}`);
+        return {
+            courtId: value.courtId,
+            latestEndTime: sortedTime[0].endDate,
+        };
+    });
+
+    // find the earliest end time among all courts
+    const earliestEndTimePerCourt = latestEndingTimePerCourt.sort((a, b) => {
+        const courtAWeight = courtsEvaluator[a.courtId];
+        const courtBWeight = courtsEvaluator[b.courtId];
+
+        // if same end time, then sort by court weight desc
+        return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime() || courtBWeight - courtAWeight;
+    })[0];
+
+    const ourStartDate = earliestEndTimePerCourt.latestEndTime;
+    const ourCourtId = earliestEndTimePerCourt.courtId;
+    const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
+
+    const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
+    const diffHours = timeDiff / (1000 * 3600);
+    return {ourStartDate, ourCourtId, ourEndDate, diffHours};
 }
 
 const run = async () => {
@@ -71,73 +101,59 @@ const run = async () => {
         return;
     }
 
-    // TODO read token from env, if token not exist, try username and password login
-    // https://www.npmjs.com/package/ts-dotenv
-    // else directly use token to book
-    // const token = process.env.TOKEN;
-    // if (token) {
-    //     console.log(`Token found, use token to book.`);
-    // } else {
-    //     console.log(`Token not found, use username and password to login.`);
-    // }
+    const token = env.TOKEN;
+    const playerIds = env.PLAYER_IDS.split(",");
+    const apiHost = env.API_HOSTNAME;
+    const host = env.HOSTNAME;
+    const kafkaName = env.KAFKA_NAME;
+    const kafkaPassword = env.KAFKA_PASSWORD;
 
-    const apiHelper = await new ApiHelper(inProductEnv);
+    const apiHelper = new ApiHelper(apiHost, host, token);
 
-    if (await apiHelper.login(Booker.Kafka)) {
-        // find out today already booked time span per courtId
-        const alreadyOccupiedTimesByCourtId =
-            await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
-      
-        const latestEndingTimePerCourt = alreadyOccupiedTimesByCourtId.map((value) => {
-            // find the booking time with the latest end time for a specific court
-            const sortedTime = value.bookingTimes.sort((a, b) => {
-                return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
-            });
-            console.log(`Court ${Math.abs(courtsEvaluator[value.courtId])} has latest end book time: ${sortedTime[0].endDate}`);
-            return {
-                courtId: value.courtId,
-                latestEndTime: sortedTime[0].endDate,
-            };
-        });
-        
-        // find the earliest end time among all courts
-        const earliestEndTimePerCourt = latestEndingTimePerCourt.sort((a, b) => {
-            const courtAWeight = courtsEvaluator[a.courtId];
-            const courtBWeight = courtsEvaluator[b.courtId];
+    if (!token) {
+        console.log("No token found, use username and password to login.");
+       const loginSuccess = await apiHelper.login(kafkaName, kafkaPassword);
+       if(!loginSuccess) {
+              console.log("Login failed, please check username and password.");
+              return;
+       }
+    }
 
-            // if same end time, then sort by court weight desc
-            return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime() || courtBWeight - courtAWeight;
-        })[0];
-
-        const ourStartDate = earliestEndTimePerCourt.latestEndTime;
-        const ourCourtId = earliestEndTimePerCourt.courtId;
-        const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
-
-        const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
-        const diffHours = timeDiff / (1000 * 3600);
-
+    try {
+        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
         if (diffHours > 2) {
             console.log("Booking span is more than 2 hours.");
-            //get 2 hours later of time from ourStartDate
-            const ourMidDateObj = new Date(ourStartDate);
-            ourMidDateObj.setHours(ourMidDateObj.getHours() + 2);
-            const ourMidDate = ourMidDateObj.toISOString();
-            console.log("Booking first 2 hours by Kafka....");
-            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate);
-            console.log("Booking first 2 hours by Tomcat....");
-            if (await apiHelper.login(Booker.Tomcat) &&
-                await apiHelper.bookCourt(ourCourtId, ourMidDate, ourEndDate)) {
-                createBookedLockFile();
-            }
-            return;
+
+            //     A,B,C,D 1.5 hours;
+            const ourMidDateObj1 = new Date(ourStartDate);
+            ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1.5);
+            const ourMidDate1 = ourMidDateObj1.toISOString();
+            console.log("Booking first 1.5 hours double");
+            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
+
+            //     A,B 0.5 hours;
+            console.log("Booking second 0.5 hour single");
+            const ourMidDateObj2 = new Date(ourStartDate);
+            ourMidDateObj2.setHours(ourMidDateObj2.getHours() + 2);
+            const ourMidDate2 = ourMidDateObj2.toISOString();
+            await apiHelper.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
+
+            //     C,D 0.5 hours;
+            console.log("Booking third 0.5 hour single");
+            const ourMidDateObj3 = new Date(ourStartDate);
+            ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2.5);
+            const ourMidDate3 = ourMidDateObj3.toISOString();
+            await apiHelper.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
+
+            //     A,B,C,D rest hours;
+            console.log("Booking rest time double");
+            await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
         } else {
             console.log("Booking span is less or equal to 2 hours.");
-            if (await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate)) {
-                createBookedLockFile();
-            }
+            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         }
-    } else {
-        console.log("Login Unsuccessful");
+    } catch (e) {
+        console.error(e);
     }
 };
 

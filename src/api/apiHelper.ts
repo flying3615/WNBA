@@ -1,39 +1,18 @@
-import fs from "fs";
 import {courtsEvaluator} from "./main";
 
 export class ApiHelper {
     private token: string;
-    private apiHost: string;
-    private host: string;
-    private playerIds: string[];
-    
-    private inProductEnv: boolean;
-    constructor(inProductEnv:boolean) {
-        this.inProductEnv = inProductEnv;
-        this.initialize(inProductEnv);
+    private readonly apiHost: string;
+    private readonly host: string;
+
+    constructor(apiHost: string, host: string, token?: string) {
+        this.apiHost = apiHost;
+        this.host = host;
+        this.token = token;
     }
 
-    initialize(inProductEnv:boolean) {
-        this.apiHost = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/api.txt" : "../api.txt", "utf-8");
-        this.host = fs.readFileSync(inProductEnv ? "/home/ubuntu/WNBA/host.txt" : "../host.txt", "utf-8");
-    }
 
-    async login(booker:string) {
-
-        let credentials: string[];
-        if(booker == "KK") {
-            credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginKK.txt" : "../loginKK.txt", "utf-8").split("\n");
-            this.playerIds = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/playerIdsKK.txt" : "../playerIdsKK.txt", "utf-8").split("\n");
-        }
-
-        if(booker == "TT") {
-            credentials = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/loginTT.txt" : "../loginTT.txt", "utf-8").split("\n");
-            this.playerIds = fs.readFileSync(this.inProductEnv ? "/home/ubuntu/WNBA/playerIdsTT.txt" : "../playerIdsTT.txt", "utf-8").split("\n");
-        }
-        
-        if(!credentials|| credentials.length < 2) {
-            throw Error("No credentials found or invalid credentials...");
-        }
+    async login(username: string, password: string) {
 
         const loginResponse = await fetch(`https://${this.apiHost}/auth/token`, {
             "headers": {
@@ -54,7 +33,7 @@ export class ApiHelper {
                 "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{"username":"${credentials[0]}","password":"${credentials[1]}","clientId":"helloclub-client","grantType":"password"}`,
+            "body": `{"username":"${username}","password":"${password}","clientId":"helloclub-client","grantType":"password"}`,
             "method": "POST"
         });
 
@@ -66,26 +45,24 @@ export class ApiHelper {
         return false;
     }
 
-    async bookCourt(court:string, startTime:string, endTime:string) {
+    async bookCourt(court: string, startTime: string, endTime: string, playerIds: string[]) {
 
         const singleMode = "615fcc5a03fdff65ad87ada7";
         const doubleMode = "615fcc9db35243a097257517";
 
-        if(!this.token) {
-            throw Error("Not login yet");
-        }
-
-        if(!this.playerIds) {
+        if (!playerIds) {
             throw Error("No player found");
         }
 
-        //TODO kafka and tomcat specific case
+        const playerList = playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
 
-        const playerList = this.playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
+        const playMode = playerIds.length > 2 ? doubleMode : singleMode;
 
-        const playMode = this.playerIds.filter(p=>p!=="").length > 2 ? doubleMode : singleMode;
+        const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`
 
-        const bookResponse =  await fetch(`https://${this.apiHost}/booking`, {
+        console.log(body)
+
+        const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
             "headers": {
                 "accept": "application/json, text/plain, */*",
                 "accept-language": "en-US,en;q=0.9,zh-CN;q=0.8,zh;q=0.7",
@@ -104,14 +81,14 @@ export class ApiHelper {
                 "Referer": `https://${this.host}`,
                 "Referrer-Policy": "strict-origin-when-cross-origin"
             },
-            "body": `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":true,"forOthers":false,"reminderTime":30,"sendReminderEmail":true}`,
+            "body": body,
             "method": "POST"
         });
 
         const bookResult = await bookResponse.json();
 
         const courtNumber = Math.abs(courtsEvaluator[court]);
-        if(bookResponse.ok && !!bookResult.bookedOn) {
+        if (bookResponse.ok && !!bookResult.bookedOn) {
             console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn} from ${startTime} to ${endTime}`);
             return true;
         } else {
@@ -124,7 +101,7 @@ export class ApiHelper {
 
     async getAllEvents(startDate: string, endDate: string) {
 
-        if(!this.token) {
+        if (!this.token) {
             throw Error("Not login yet");
         }
 
