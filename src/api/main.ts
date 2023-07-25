@@ -117,6 +117,8 @@ const run = async () => {
               console.log("Login failed, please check username and password.");
               return;
        }
+    } else {
+        console.log("Use token to login.", token);
     }
 
     try {

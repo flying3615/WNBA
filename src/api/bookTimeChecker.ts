@@ -17,6 +17,7 @@ export const getBookingAndEventTimes = async (startDate: string, endDate: string
         // console.log("All events today", JSON.stringify(eventResult, null, 2));
     } else {
         console.log("No event found ", rawEvents);
+        return []
     }
 
     // const bookingJsonString = await fs.readFile("../setup/bookings.json", "utf8")
