@@ -9,6 +9,7 @@ console.log(__dirname);
 
 const env = load({
     TOKEN: String,
+    USE_TOKEN: Boolean,
     PLAYER_IDS: String,
     HOSTNAME: String,
     API_HOSTNAME: String,
@@ -101,16 +102,15 @@ const run = async () => {
         return;
     }
 
-    const token = env.TOKEN;
     const playerIds = env.PLAYER_IDS.split(",");
     const apiHost = env.API_HOSTNAME;
     const host = env.HOSTNAME;
     const kafkaName = env.KAFKA_NAME;
     const kafkaPassword = env.KAFKA_PASSWORD;
 
-    const apiHelper = new ApiHelper(apiHost, host, token);
-
-    if (!token) {
+    let apiHelper
+    if (!env.USE_TOKEN) {
+        apiHelper = new ApiHelper(apiHost, host);
         console.log("No token found, use username and password to login.");
        const loginSuccess = await apiHelper.login(kafkaName, kafkaPassword);
        if(!loginSuccess) {
@@ -118,6 +118,8 @@ const run = async () => {
               return;
        }
     } else {
+        const token = env.TOKEN;
+        apiHelper = new ApiHelper(apiHost, host, token);
         console.log("Use token to login.", token);
     }
 
