@@ -4,7 +4,7 @@ export class ApiHelper {
     private token: string;
     private readonly apiHost: string;
     private readonly host: string;
-    private readonly headers: any
+    private headers: any
 
     constructor(apiHost: string, host: string, token?: string) {
         this.apiHost = apiHost;
@@ -41,6 +41,23 @@ export class ApiHelper {
         const data = await loginResponse.json();
         if (loginResponse.ok) {
             this.token = data.access_token;
+
+            this.headers = {
+                "accept": "application/json, text/plain, */*",
+                "authorization": `Bearer ${this.token}`,
+                "accept-language": "en-GB,en-US;q=0.9,en;q=0.8",
+                "content-type": "application/json;charset=UTF-8",
+                "sec-ch-ua": "\"Not.A/Brand\";v=\"8\", \"Chromium\";v=\"114\", \"Microsoft Edge\";v=\"114\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "cross-site",
+                "x-api-version": "2023-07-18",
+                "x-club": "wnba",
+                "x-hostname": `${this.host}`,
+                "x-version": "9fd0072",
+            }
             return true;
         }
         return false;

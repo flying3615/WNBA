@@ -29,6 +29,7 @@ export const getBookingAndEventTimes = async (startDate: string, endDate: string
         // console.log("All bookings today", JSON.stringify(bookingResult, null, 2));
     } else {
         console.log("No booking found ", rawBookings);
+        return []
     }
 
     return eventResult.map(eventObj => {

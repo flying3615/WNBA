@@ -8,7 +8,10 @@ import {load} from "ts-dotenv";
 console.log(__dirname);
 
 const env = load({
-    TOKEN: String,
+    TOKEN: {
+        type: String,
+        optional: true,
+    },
     USE_TOKEN: Boolean,
     PLAYER_IDS: String,
     HOSTNAME: String,
@@ -107,25 +110,23 @@ const run = async () => {
     const host = env.HOSTNAME;
     const kafkaName = env.KAFKA_NAME;
     const kafkaPassword = env.KAFKA_PASSWORD;
-
-    let apiHelper
-    if (!env.USE_TOKEN) {
-        apiHelper = new ApiHelper(apiHost, host);
+    const token = env.TOKEN;
+    const apiHelper = new ApiHelper(apiHost, host, token);
+    if (!token) {
         console.log("No token found, use username and password to login.");
-       const loginSuccess = await apiHelper.login(kafkaName, kafkaPassword);
-       if(!loginSuccess) {
-              console.log("Login failed, please check username and password.");
-              return;
-       }
+        const loginSuccess = await apiHelper.login(kafkaName, kafkaPassword);
+        if (!loginSuccess) {
+            console.log("Login failed, please check username and password.");
+            return;
+        }
     } else {
-        const token = env.TOKEN;
-        apiHelper = new ApiHelper(apiHost, host, token);
         console.log("Use token to login.", token);
     }
 
     try {
         const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
         if (diffHours > 2) {
+            // TODO need 2 logins to finish this function
             console.log("Booking span is more than 2 hours.");
 
             //     A,B,C,D 1.5 hours;
