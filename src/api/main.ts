@@ -131,7 +131,8 @@ const run = async () => {
         //
         //     //     A,B,C,D 1.5 hours;
         //     const ourMidDateObj1 = new Date(ourStartDate);
-        //     ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1.5);
+        //     ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1);
+        //     ourMidDateObj1.setMinutes(ourMidDateObj1.getMinutes() + 30);
         //     const ourMidDate1 = ourMidDateObj1.toISOString();
         //     console.log("Booking first 1.5 hours double");
         //     await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
@@ -146,7 +147,8 @@ const run = async () => {
         //     //     C,D 0.5 hours;
         //     console.log("Booking third 0.5 hour single");
         //     const ourMidDateObj3 = new Date(ourStartDate);
-        //     ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2.5);
+        //     ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2);
+        //     ourMidDateObj3.setMinutes(ourMidDateObj3.getMinutes() + 30);
         //     const ourMidDate3 = ourMidDateObj3.toISOString();
         //     await apiHelper.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
         //
