@@ -125,38 +125,38 @@ const run = async () => {
 
     try {
         const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
-        if (diffHours > 2) {
-            // TODO need 2 logins to finish this function
-            console.log("Booking span is more than 2 hours.");
-
-            //     A,B,C,D 1.5 hours;
-            const ourMidDateObj1 = new Date(ourStartDate);
-            ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1.5);
-            const ourMidDate1 = ourMidDateObj1.toISOString();
-            console.log("Booking first 1.5 hours double");
-            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
-
-            //     A,B 0.5 hours;
-            console.log("Booking second 0.5 hour single");
-            const ourMidDateObj2 = new Date(ourStartDate);
-            ourMidDateObj2.setHours(ourMidDateObj2.getHours() + 2);
-            const ourMidDate2 = ourMidDateObj2.toISOString();
-            await apiHelper.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
-
-            //     C,D 0.5 hours;
-            console.log("Booking third 0.5 hour single");
-            const ourMidDateObj3 = new Date(ourStartDate);
-            ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2.5);
-            const ourMidDate3 = ourMidDateObj3.toISOString();
-            await apiHelper.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
-
-            //     A,B,C,D rest hours;
-            console.log("Booking rest time double");
-            await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
-        } else {
-            console.log("Booking span is less or equal to 2 hours.");
-            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
-        }
+        // if (diffHours > 2) {
+        //     // TODO need 2 logins to finish this function
+        //     console.log("Booking span is more than 2 hours.");
+        //
+        //     //     A,B,C,D 1.5 hours;
+        //     const ourMidDateObj1 = new Date(ourStartDate);
+        //     ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1.5);
+        //     const ourMidDate1 = ourMidDateObj1.toISOString();
+        //     console.log("Booking first 1.5 hours double");
+        //     await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
+        //
+        //     //     A,B 0.5 hours;
+        //     console.log("Booking second 0.5 hour single");
+        //     const ourMidDateObj2 = new Date(ourStartDate);
+        //     ourMidDateObj2.setHours(ourMidDateObj2.getHours() + 2);
+        //     const ourMidDate2 = ourMidDateObj2.toISOString();
+        //     await apiHelper.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
+        //
+        //     //     C,D 0.5 hours;
+        //     console.log("Booking third 0.5 hour single");
+        //     const ourMidDateObj3 = new Date(ourStartDate);
+        //     ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2.5);
+        //     const ourMidDate3 = ourMidDateObj3.toISOString();
+        //     await apiHelper.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
+        //
+        //     //     A,B,C,D rest hours;
+        //     console.log("Booking rest time double");
+        //     await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
+        // } else {
+        //     console.log("Booking span is less or equal to 2 hours.");
+        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1]]) && createBookedLockFile();
+        // }
     } catch (e) {
         console.error(e);
     }
