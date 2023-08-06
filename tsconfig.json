@@ -2,7 +2,7 @@
   "compilerOptions": {
     "skipLibCheck": true,
     "target": "es2017",
-    "module": "commonjs",
+    "module": "ESNext",
     "moduleResolution": "node",
     "allowJs": true,
     "resolveJsonModule": true,

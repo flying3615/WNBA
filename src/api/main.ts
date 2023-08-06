@@ -91,7 +91,7 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 
     const ourStartDate = earliestEndTimePerCourt.latestEndTime;
     const ourCourtId = earliestEndTimePerCourt.courtId;
-    const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
+    const ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
 
     const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
     const diffHours = timeDiff / (1000 * 3600);
