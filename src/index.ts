@@ -1,11 +1,21 @@
 import fs from "fs";
 import {resolve} from "path";
-import {checkLockFileExist, createBookedLockFile, formatDateString, getDayOfWeek, getFutureDate} from "../util";
-import {ApiHelper} from "./apiHelper";
-import {getBookingAndEventTimes} from "./bookTimeChecker";
+import {
+    checkLockFileExist,
+    courtsEvaluator,
+    createBookedLockFile,
+    formatDateString,
+    getDayOfWeek,
+    getFutureDate
+} from "./util.js";
+import {ApiHelper} from "./api/apiHelper.js";
+import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
 import {load} from "ts-dotenv";
+import { fileURLToPath } from "url";
+import * as path from "path";
 
-console.log(__dirname);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const env = load({
     TOKEN: {
@@ -50,14 +60,7 @@ enum bookingTime {
     Sunday,
 }
 
-export const courtsEvaluator = {
-    "5aadd66e87c6b800048a290e": 2,
-    "5aadd66e87c6b800048a290f": 3,
-    "5aadd66e87c6b800048a2910": 4,
-    "5aadd66e87c6b800048a2911": 5,
-    "5aadd66e87c6b800048a2912": -6,
-    "5aadd66e87c6b800048a290d": -1,
-};
+
 
 const sixDayLater = getFutureDate(6);
 const sevenDayLater = getFutureDate(7);

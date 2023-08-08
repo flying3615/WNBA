@@ -2,6 +2,14 @@ import readline from "readline";
 import fs from "fs";
 import * as events from "events";
 
+export const courtsEvaluator = {
+    "5aadd66e87c6b800048a290e": 2,
+    "5aadd66e87c6b800048a290f": 3,
+    "5aadd66e87c6b800048a2910": 4,
+    "5aadd66e87c6b800048a2911": 5,
+    "5aadd66e87c6b800048a2912": -6,
+    "5aadd66e87c6b800048a290d": -1,
+};
 export const extractTime = (str: string) => {
     const pattern = /\b\d{2}:\d{2}\b/;
     const match = str.match(pattern);

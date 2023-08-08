@@ -1,10 +1,10 @@
-import {courtsEvaluator} from "./main";
+import {courtsEvaluator} from "../util.js";
 
 export class ApiHelper {
     private token: string;
     private readonly apiHost: string;
     private readonly host: string;
-    private headers: any
+    private headers: any;
 
     constructor(apiHost: string, host: string, token?: string) {
         this.apiHost = apiHost;
@@ -26,7 +26,7 @@ export class ApiHelper {
             "x-club": "wnba",
             "x-hostname": `${this.host}`,
             "x-version": "9fd0072",
-        }
+        };
     }
 
 
@@ -57,7 +57,7 @@ export class ApiHelper {
                 "x-club": "wnba",
                 "x-hostname": `${this.host}`,
                 "x-version": "9fd0072",
-            }
+            };
             return true;
         }
         return false;
@@ -76,7 +76,7 @@ export class ApiHelper {
 
         const playMode = playerIds.length >= 4 ? doubleMode : singleMode;
 
-        const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":false,"forOthers":false,"reminderTime":30,"sendReminderEmail":false}`
+        const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":false,"forOthers":false,"reminderTime":30,"sendReminderEmail":false}`;
 
         const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
             "headers": this.headers,
