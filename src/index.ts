@@ -165,13 +165,12 @@ const run = async () => {
         const ourEndDateObj = new Date(ourStartDate);
         ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
         const ourCutOffDateObj = new Date(ourStartDate).setHours(11, 0, 0, 0);
-
+        const ourEndDate = ourEndDateObj.toISOString();
         // check if ourEndDateObj is tomorrow or ourEndDateObj later than 11:00
         if(ourEndDateObj.getDate() !== new Date(ourStartDate).getDate() || ourEndDateObj.getTime() > ourCutOffDateObj) {
-            console.log("Booking span is less than 2 hours, skip today's booking");
+            console.log(`Earliest end time is ${ourEndDate}, booking span is less than 2 hours, skip today's booking`);
             return;
         }
-        const ourEndDate = ourEndDateObj.toISOString();
         await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         // }
     } catch (e) {
