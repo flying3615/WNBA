@@ -91,6 +91,7 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 
     const ourStartDate = earliestEndTimePerCourt.latestEndTime;
     const ourCourtId = earliestEndTimePerCourt.courtId;
+    // hardcoded ending time
     const ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
 
     const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
@@ -124,7 +125,7 @@ const run = async () => {
     }
 
     try {
-        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
+        const {ourStartDate, ourCourtId, diffHours} = await findPlayTimeSpan(apiHelper);
         // if (diffHours > 2) {
         //     // TODO need 2 logins to finish this function
         //     console.log("Booking span is more than 2 hours.");
@@ -157,6 +158,11 @@ const run = async () => {
         //     await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
         // } else {
         //     console.log("Booking span is less or equal to 2 hours.");
+
+        const ourEndDateObj = new Date(ourStartDate);
+        //TODO make only 2 hours later, need to change when we have another user account to book
+        ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
+        const ourEndDate = ourEndDateObj.toISOString();
         await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1]]) && createBookedLockFile();
         // }
     } catch (e) {

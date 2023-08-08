@@ -74,7 +74,7 @@ export class ApiHelper {
 
         const playerList = playerIds.filter(p=>p!=="").map(p=>`"${p}"`).join(",");
 
-        const playMode = playerIds.length > 2 ? doubleMode : singleMode;
+        const playMode = playerIds.length >= 4 ? doubleMode : singleMode;
 
         const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":false,"forOthers":false,"reminderTime":30,"sendReminderEmail":false}`
 
