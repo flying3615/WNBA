@@ -163,8 +163,14 @@ const run = async () => {
         //     console.log("Booking span is less or equal to 2 hours.");
 
         const ourEndDateObj = new Date(ourStartDate);
-        //TODO make only 2 hours later, need to change when we have another user account to book
         ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
+        const ourCutOffDateObj = new Date(ourStartDate).setHours(11, 0, 0, 0);
+
+        // check if ourEndDateObj is tomorrow or ourEndDateObj later than 11:00
+        if(ourEndDateObj.getDate() !== new Date(ourStartDate).getDate() || ourEndDateObj.getTime() > ourCutOffDateObj) {
+            console.log("Booking span is less than 2 hours, skip today's booking");
+            return;
+        }
         const ourEndDate = ourEndDateObj.toISOString();
         await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         // }
