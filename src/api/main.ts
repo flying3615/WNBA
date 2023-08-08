@@ -163,7 +163,7 @@ const run = async () => {
         //TODO make only 2 hours later, need to change when we have another user account to book
         ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
         const ourEndDate = ourEndDateObj.toISOString();
-        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1]]) && createBookedLockFile();
+        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         // }
     } catch (e) {
         console.error(e);
