@@ -164,7 +164,7 @@ const run = async () => {
 
         const ourEndDateObj = new Date(ourStartDate);
         ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
-        const ourCutOffDateObj = new Date(ourStartDate).setHours(11, 0, 0, 0);
+        const ourCutOffDateObj = new Date(ourStartDate).setHours(11, 30, 0, 0);
         const ourEndDate = ourEndDateObj.toISOString();
         // check if ourEndDateObj is tomorrow or ourEndDateObj later than 11:00
         if(ourEndDateObj.getDate() !== new Date(ourStartDate).getDate() || ourEndDateObj.getTime() > ourCutOffDateObj) {
