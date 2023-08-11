@@ -42,16 +42,6 @@ const env = load({
 //     data2 ? this.logCopy(currentDate, data, data2) : this.logCopy(currentDate, data);
 // };
 
-// Monday skip
-// Tuesday 20 pm-23 pm @ court 6
-// Tuesday 20 pm-23 pm @ court 2
-// Wednesday 21 pm-23:30 pm @ court 5
-// Thursday 19:30 pm-22:30 pm @ court 5
-// Friday skip
-// Saturday 18:00pm-22:00pm
-// Saturday 19:00pm-22:00pm @ court 2
-// minus 12 hours, all afternoon
-
 
 enum bookingTime {
     Tuesday,
@@ -97,7 +87,7 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
     const ourStartDate = earliestEndTimePerCourt.latestEndTime;
     const ourCourtId = earliestEndTimePerCourt.courtId;
     // hardcoded ending time
-    const ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
+    const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
 
     const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
     const diffHours = timeDiff / (1000 * 3600);
@@ -133,18 +123,7 @@ const run = async () => {
     }
 
     try {
-        const {ourStartDate, ourCourtId, diffHours} = await findPlayTimeSpan(apiHelper);
-        const ourEndDateObj = new Date(ourStartDate);
-        ourEndDateObj.setHours(ourEndDateObj.getHours() + 2);
-        const ourCutOffDateObj = new Date(ourStartDate).setHours(11, 30, 0, 0);
-        const ourEndDate = ourEndDateObj.toISOString();
-
-        // check if ourEndDateObj is tomorrow or ourEndDateObj later than 11:30, which mean begin time is before 9:30
-        if(ourEndDateObj.getDate() !== new Date(ourStartDate).getDate() || ourEndDateObj.getTime() > ourCutOffDateObj) {
-            console.log(`Earliest end time is ${ourEndDate}, booking span is less than 2 hours, skip today's booking`);
-            return;
-        }
-
+        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
         if (diffHours > 2) {
             console.log("Booking span is more than 2 hours.");
             //     A,B,C,D 1.5 hours;
@@ -176,9 +155,11 @@ const run = async () => {
             //     A,B,C,D rest hours;
             console.log("Booking rest time double");
             await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
-        } else {
-            console.log("Booking span is less or equal to 2 hours.");
+        } else if(diffHours === 2) {
+            console.log("Booking span equals to 2 hours.");
             await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
+        } else {
+            console.log("Booking span less than 2 hours, skip booking today.");
         }
     } catch (e) {
         console.error(e);
