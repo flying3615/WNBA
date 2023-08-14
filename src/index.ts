@@ -109,21 +109,21 @@ const run = async () => {
     const tomcatName = env.TOMCAT_NAME;
     const tomcatPassword = env.TOMCAT_PASSWORD;
     const token = env.TOKEN;
-    const apiHelper = new ApiHelper(apiHost, host, token);
+    const apiHelperKK = new ApiHelper(apiHost, host);
     if (!token) {
         console.log("No token found, use username and password to login.");
-        console.log("Login with Kafka");
-        const loginSuccess = await apiHelper.login(kafkaName, kafkaPassword);
+        const loginSuccess = await apiHelperKK.login(kafkaName, kafkaPassword);
         if (!loginSuccess) {
-            console.log("Login failed, please check username and password.");
+            console.log("KK Login failed, please check username and password.");
             return;
         }
+        console.log("Logged in with Kafka");
     } else {
         console.log("Use token to login.", token);
     }
 
     try {
-        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
+        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
         if (diffHours > 2) {
             console.log("Booking span is more than 2 hours.");
             //     A,B,C,D 1.5 hours;
@@ -132,17 +132,22 @@ const run = async () => {
             ourMidDateObj1.setMinutes(ourMidDateObj1.getMinutes() + 30);
             const ourMidDate1 = ourMidDateObj1.toISOString();
             console.log("Booking first 1.5 hours double");
-            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
 
             //     A,B 0.5 hours;
             console.log("Booking second 0.5 hour single");
             const ourMidDateObj2 = new Date(ourStartDate);
             ourMidDateObj2.setHours(ourMidDateObj2.getHours() + 2);
             const ourMidDate2 = ourMidDateObj2.toISOString();
-            await apiHelper.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
+            await apiHelperKK.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
 
-            await apiHelper.login(tomcatName, tomcatPassword);
-            console.log("Login with Tomcat");
+            const apiHelperTT = new ApiHelper(apiHost, host);
+            const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
+            if (!loginSuccess) {
+                console.log("TT login failed, please check username and password.");
+                return;
+            }
+            console.log("Logged in with Tomcat");
 
             //     C,D 0.5 hours;
             console.log("Booking third 0.5 hour single");
@@ -150,14 +155,14 @@ const run = async () => {
             ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2);
             ourMidDateObj3.setMinutes(ourMidDateObj3.getMinutes() + 30);
             const ourMidDate3 = ourMidDateObj3.toISOString();
-            await apiHelper.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
+            await apiHelperTT.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
 
             //     A,B,C,D rest hours;
             console.log("Booking rest time double");
-            await apiHelper.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
+            await apiHelperTT.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
         } else if(diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
-            await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         } else {
             console.log("Booking span less than 2 hours, skip booking today.");
         }
