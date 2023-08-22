@@ -126,20 +126,12 @@ const run = async () => {
         const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
         if (diffHours > 2) {
             console.log("Booking span is more than 2 hours.");
-            //     A,B,C,D 1.5 hours;
+            //     A,B 2 hours;
             const ourMidDateObj1 = new Date(ourStartDate);
-            ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 1);
-            ourMidDateObj1.setMinutes(ourMidDateObj1.getMinutes() + 30);
+            ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
             const ourMidDate1 = ourMidDateObj1.toISOString();
             console.log("Booking first 1.5 hours double");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, playerIds);
-
-            //     A,B 0.5 hours;
-            console.log("Booking second 0.5 hour single");
-            const ourMidDateObj2 = new Date(ourStartDate);
-            ourMidDateObj2.setHours(ourMidDateObj2.getHours() + 2);
-            const ourMidDate2 = ourMidDateObj2.toISOString();
-            await apiHelperKK.bookCourt(ourCourtId, ourMidDate1, ourMidDate2, [playerIds[0], playerIds[1]]);
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1]]);
 
             const apiHelperTT = new ApiHelper(apiHost, host);
             const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
@@ -148,18 +140,9 @@ const run = async () => {
                 return;
             }
             console.log("Logged in with Tomcat");
-
-            //     C,D 0.5 hours;
-            console.log("Booking third 0.5 hour single");
-            const ourMidDateObj3 = new Date(ourStartDate);
-            ourMidDateObj3.setHours(ourMidDateObj3.getHours() + 2);
-            ourMidDateObj3.setMinutes(ourMidDateObj3.getMinutes() + 30);
-            const ourMidDate3 = ourMidDateObj3.toISOString();
-            await apiHelperTT.bookCourt(ourCourtId, ourMidDate2, ourMidDate3, [playerIds[2], playerIds[3]]);
-
-            //     A,B,C,D rest hours;
+            //     C,D rest hours;
             console.log("Booking rest time double");
-            await apiHelperTT.bookCourt(ourCourtId, ourMidDate3, ourEndDate, playerIds) && createBookedLockFile();
+            await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[3]]) && createBookedLockFile();
         } else if(diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
             await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
