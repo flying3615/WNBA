@@ -45,9 +45,9 @@ const env = load({
 
 enum bookingTime {
     Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
+    // Wednesday,
+    // Thursday,
+    // Friday,
     Saturday,
     Sunday,
 }
