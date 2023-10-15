@@ -95,7 +95,7 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
     const ourStartDate = earliestEndTimePerCourt.latestEndTime;
     const ourCourtId = earliestEndTimePerCourt.courtId;
     // hardcoded ending time
-    const ourEndDate = `${formatDateString(sevenDayLater)}T11:30:00.000Z`;
+    const ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
 
     const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
     const diffHours = timeDiff / (1000 * 3600);
@@ -179,7 +179,7 @@ const bookForSaturdays = async () => {
             return;
         }
         const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
-        const ourEndDateTime2 = `${saturdayString}T11:30:00.000Z`;
+        const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
         await apiHelperTT.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
     }
 };
