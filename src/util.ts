@@ -127,7 +127,22 @@ export const formatDateString = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+
+
+type DayInWeek = "Sunday"| "Monday"| "Tuesday"| "Wednesday"| "Thursday"| "Friday"| "Saturday"
+const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 export const getDayOfWeek = (date: Date) => {
-    const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     return daysOfWeek[date.getDay()];
+};
+
+export const getDateFromThisWeekDay = (day: DayInWeek) => {
+    const today = new Date();
+    const todayIndex = today.getDay();
+    const targetIndex = daysOfWeek.indexOf(day);
+    let dayDiff = targetIndex - todayIndex;
+    dayDiff = dayDiff > 0 ? dayDiff : 7 + dayDiff;
+    const futureDate = new Date();
+    futureDate.setDate(today.getDate() + dayDiff);
+    return futureDate;
 };

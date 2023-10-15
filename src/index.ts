@@ -4,7 +4,7 @@ import {
     checkLockFileExist,
     courtsEvaluator,
     createBookedLockFile,
-    formatDateString,
+    formatDateString, getDateFromThisWeekDay,
     getDayOfWeek,
     getFutureDate
 } from "./util.js";
@@ -57,6 +57,14 @@ enum bookingTime {
 const sixDayLater = getFutureDate(6);
 const sevenDayLater = getFutureDate(7);
 const dayOfWeek = getDayOfWeek(sevenDayLater);
+const playerIds = env.PLAYER_IDS.split(",");
+const apiHost = env.API_HOSTNAME;
+const host = env.HOSTNAME;
+const kafkaName = env.KAFKA_NAME;
+const kafkaPassword = env.KAFKA_PASSWORD;
+const tomcatName = env.TOMCAT_NAME;
+const tomcatPassword = env.TOMCAT_PASSWORD;
+const token = env.TOKEN;
 
 async function findPlayTimeSpan(apiHelper: ApiHelper) {
     // find out today already booked time span per courtId
@@ -97,19 +105,12 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 const run = async () => {
 
     if (bookingTime[dayOfWeek] == undefined) {
-        console.log(`We don't book on ${dayOfWeek}`);
+        console.log(`We don't book on ${dayOfWeek} today`);
         return;
     }
-
-    const playerIds = env.PLAYER_IDS.split(",");
-    const apiHost = env.API_HOSTNAME;
-    const host = env.HOSTNAME;
-    const kafkaName = env.KAFKA_NAME;
-    const kafkaPassword = env.KAFKA_PASSWORD;
-    const tomcatName = env.TOMCAT_NAME;
-    const tomcatPassword = env.TOMCAT_PASSWORD;
-    const token = env.TOKEN;
+    
     const apiHelperKK = new ApiHelper(apiHost, host);
+    
     if (!token) {
         console.log("No token found, use username and password to login.");
         const loginSuccess = await apiHelperKK.login(kafkaName, kafkaPassword);
@@ -153,6 +154,38 @@ const run = async () => {
         console.error(e);
     }
 };
+
+const bookForSaturdays = async () => {
+    const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
+    const saturdayString = formatDateString(thisSaturdayDate);
+
+    const apiHelperKK = new ApiHelper(apiHost, host);
+    const loginSuccessKK = await apiHelperKK.login(kafkaName, kafkaPassword);
+    if (!loginSuccessKK) {
+        console.log("KK login failed, please check username and password.");
+        return;
+    }
+    const ourStartDateTime1 = `${saturdayString}T07:30:00.000Z`;
+    const ourEndDateTime1 = `${saturdayString}T09:30:00.000Z`;
+    // only try court 2
+    const bookResult = await apiHelperKK.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
+
+    if(bookResult) {
+        console.log("Book Saturday successfully, try second part booking");
+        const apiHelperTT = new ApiHelper(apiHost, host);
+        const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
+        if (!loginSuccessTT) {
+            console.log("TT login failed, please check username and password.");
+            return;
+        }
+        const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
+        const ourEndDateTime2 = `${saturdayString}T11:30:00.000Z`;
+        await apiHelperTT.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
+    }
+};
+
+
+bookForSaturdays().then();
 
 const existingLockFile = checkLockFileExist();
 if (!existingLockFile) {
