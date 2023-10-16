@@ -11,7 +11,7 @@ import {
 import {ApiHelper} from "./api/apiHelper.js";
 import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
 import {load} from "ts-dotenv";
-import { fileURLToPath } from "url";
+import {fileURLToPath} from "url";
 import * as path from "path";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -51,8 +51,6 @@ enum bookingTime {
     Saturday,
     Sunday,
 }
-
-
 
 const sixDayLater = getFutureDate(6);
 const sevenDayLater = getFutureDate(7);
@@ -104,13 +102,14 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 
 const run = async () => {
 
+    console.log("=========Daily booking start===========");
     if (bookingTime[dayOfWeek] == undefined) {
         console.log(`We don't book on ${dayOfWeek} today`);
         return;
     }
-    
+
     const apiHelperKK = new ApiHelper(apiHost, host);
-    
+
     if (!token) {
         console.log("No token found, use username and password to login.");
         const loginSuccess = await apiHelperKK.login(kafkaName, kafkaPassword);
@@ -144,7 +143,7 @@ const run = async () => {
             //     C,D rest hours;
             console.log("Booking rest time double");
             await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[3]]) && createBookedLockFile();
-        } else if(diffHours === 2) {
+        } else if (diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
             await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
         } else {
@@ -156,8 +155,20 @@ const run = async () => {
 };
 
 const bookForSaturdays = async () => {
+    console.log("====Try to book on this Saturday====");
     const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
     const saturdayString = formatDateString(thisSaturdayDate);
+
+    const existingLockSaturdayFile = checkLockFileExist("lock_Saturday");
+    if (existingLockSaturdayFile) {
+        if (existingLockSaturdayFile.includes(saturdayString)) {
+            console.log("Saturday lock exists");
+            return;
+        } else {
+            console.log("Saturday lock exists, but not for this week, remove it....");
+            fs.unlinkSync(existingLockSaturdayFile);
+        }
+    }
 
     const apiHelperKK = new ApiHelper(apiHost, host);
     const loginSuccessKK = await apiHelperKK.login(kafkaName, kafkaPassword);
@@ -170,8 +181,9 @@ const bookForSaturdays = async () => {
     // only try court 2
     const bookResult = await apiHelperKK.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
 
-    if(bookResult) {
+    if (bookResult) {
         console.log("Book Saturday successfully, try second part booking");
+        createBookedLockFile(`${saturdayString}.lock_Saturday`);
         const apiHelperTT = new ApiHelper(apiHost, host);
         const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
         if (!loginSuccessTT) {

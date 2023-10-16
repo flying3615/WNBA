@@ -85,8 +85,8 @@ export const readLines = async (filePath: string) => {
     return lines;
 };
 
-export const createBookedLockFile = () => {
-    const filename = `${formatDateString(new Date())}.lock`;
+export const createBookedLockFile = (lockName?: string) => {
+    const filename = lockName ? `${lockName}`: `${formatDateString(new Date())}.lock`;
     fs.writeFile(filename, "", function (err) {
         if (err) {
             console.log(err);
@@ -96,11 +96,12 @@ export const createBookedLockFile = () => {
     });
 };
 
-export const checkLockFileExist = () => {
+export const checkLockFileExist = (suffix?: string) => {
     const directory = "./";
     try {
         const files = fs.readdirSync(directory);
-        const lockFiles = files.filter(file => file.endsWith(".lock"));
+        const lockFiles = files.filter(file =>
+            suffix ? file.endsWith(`.${suffix}`) : file.endsWith(".lock"));
         if (lockFiles.length > 0) {
             console.log(`Found ${lockFiles[0]} file in current directory`);
             return lockFiles[0];
