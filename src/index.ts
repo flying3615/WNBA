@@ -36,11 +36,11 @@ const env = load({
 
 
 // console.log with timestamp
-// console.logCopy = console.log.bind(console);
-// console.log = function (data, data2) {
-//     const currentDate = '[' + new Date().toString() + '] ';
-//     data2 ? this.logCopy(currentDate, data, data2) : this.logCopy(currentDate, data);
-// };
+(console as any).logCopy = console.log.bind(console);
+console.log = function (data, data2) {
+    const currentDate = "[" + new Date().toString() + "] ";
+    data2 ? this.logCopy(currentDate, data, data2) : this.logCopy(currentDate, data);
+};
 
 
 enum bookingTime {
@@ -102,7 +102,7 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 
 const run = async () => {
 
-    console.log("=========Daily booking start===========");
+    console.log("++++++++++++Daily booking start++++++++++");
     if (bookingTime[dayOfWeek] == undefined) {
         console.log(`We don't book on ${dayOfWeek} today`);
         return;
@@ -155,7 +155,7 @@ const run = async () => {
 };
 
 const bookForSaturdays = async () => {
-    console.log("====Try to book on this Saturday====");
+    console.log("-----Try to book on this Saturday--------");
     const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
     const saturdayString = formatDateString(thisSaturdayDate);
 
@@ -178,21 +178,25 @@ const bookForSaturdays = async () => {
     }
     const ourStartDateTime1 = `${saturdayString}T07:30:00.000Z`;
     const ourEndDateTime1 = `${saturdayString}T09:30:00.000Z`;
-    // only try court 2
-    const bookResult = await apiHelperKK.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
 
-    if (bookResult) {
-        console.log("Book Saturday successfully, try second part booking");
-        createBookedLockFile(`${saturdayString}.lock_Saturday`);
-        const apiHelperTT = new ApiHelper(apiHost, host);
-        const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
-        if (!loginSuccessTT) {
-            console.log("TT login failed, please check username and password.");
+    const courtIds = Object.keys(courtsEvaluator);
+    for(const courtId in courtIds) {
+        const bookResult = await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
+
+        if (bookResult.result) {
+            console.log("Book Saturday successfully, try second part booking");
+            createBookedLockFile(`${saturdayString}.lock_Saturday`);
+            const apiHelperTT = new ApiHelper(apiHost, host);
+            const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
+            if (!loginSuccessTT) {
+                console.log("TT login failed, please check username and password.");
+                return;
+            }
+            const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
+            const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
+            await apiHelperTT.bookCourt(courtId, ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
             return;
         }
-        const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
-        const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
-        await apiHelperTT.bookCourt("5aadd66e87c6b800048a290e", ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
     }
 };
 

@@ -95,11 +95,11 @@ export class ApiHelper {
         const courtNumber = Math.abs(courtsEvaluator[court]);
         if (bookResponse.ok && !!bookResult.bookedOn) {
             console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn} from ${startTime} to ${endTime}`);
-            return true;
+            return {result:true};
         } else {
             // TODO send email
             console.log(`Booking Unsuccessfully, failed to booked court ${courtNumber} from ${startTime} to ${endTime} due to ${bookResult.message}`);
-            return false;
+            return {result:false, msg: bookResult.message};
         }
     }
 
