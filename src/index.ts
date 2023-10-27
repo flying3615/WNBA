@@ -200,20 +200,22 @@ const bookForSaturdays = async () => {
     }
 };
 
+bookForSaturdays()
+    .then(() => {
+        const existingLockFile = checkLockFileExist();
+        if (!existingLockFile) {
+            return run();
+        } else {
+            // if exists, but not equal as today's, means it's old one, delete it then do the job
+            const todayLockFileName = `${formatDateString(new Date())}.lock`;
+            if (todayLockFileName !== existingLockFile) {
+                console.log("trying to book", todayLockFileName, existingLockFile);
+                fs.unlinkSync(existingLockFile);
+                return run();
+            } else {
+                console.log("same date lock exists, today has been booked");
+            }
+        }
+    }).then(() => console.log("DONE"))
+    .catch(e => console.error(e));
 
-bookForSaturdays().then();
-
-const existingLockFile = checkLockFileExist();
-if (!existingLockFile) {
-    run().then(() => console.log("DONE")).catch(e => console.error(e));
-} else {
-    // if exists, but not equal as today's, means it's old one, delete it then do the job
-    const todayLockFileName = `${formatDateString(new Date())}.lock`;
-    if (todayLockFileName !== existingLockFile) {
-        console.log("trying to book", todayLockFileName, existingLockFile);
-        fs.unlinkSync(existingLockFile);
-        run().then(() => console.log("DONE")).catch(e => console.error(e));
-    } else {
-        console.log("same date lock exists, today has been booked");
-    }
-}
