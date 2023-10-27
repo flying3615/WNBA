@@ -180,7 +180,7 @@ const bookForSaturdays = async () => {
     const ourEndDateTime1 = `${saturdayString}T09:30:00.000Z`;
 
     const courtIds = Object.keys(courtsEvaluator);
-    for(const courtId in courtIds) {
+    for(const courtId of courtIds) {
         const bookResult = await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
 
         if (bookResult.result) {
