@@ -142,7 +142,7 @@ const run = async () => {
             console.log("Logged in with Tomcat");
             //     C,D rest hours;
             console.log("Booking rest time double");
-            await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[3]]) && createBookedLockFile();
+            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[3]])).result && createBookedLockFile();
         } else if (diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
             await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
@@ -155,6 +155,11 @@ const run = async () => {
 };
 
 const bookForSaturdays = async () => {
+    if(dayOfWeek == "Saturday") {
+        console.log("Today is Saturday, skip Saturday checking book....");
+        return;
+    }
+    
     console.log("-----Try to book on this Saturday--------");
     const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
     const saturdayString = formatDateString(thisSaturdayDate);
