@@ -131,7 +131,7 @@ const run = async () => {
             ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
             const ourMidDate1 = ourMidDateObj1.toISOString();
             console.log("Booking first 1.5 hours double");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1]]);
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1], playerIds[3]]);
 
             const apiHelperTT = new ApiHelper(apiHost, host);
             const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
@@ -142,7 +142,7 @@ const run = async () => {
             console.log("Logged in with Tomcat");
             //     C,D rest hours;
             console.log("Booking rest time double");
-            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[3]])).result && createBookedLockFile();
+            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]])).result && createBookedLockFile();
         } else if (diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
             await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
