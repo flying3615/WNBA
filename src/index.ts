@@ -13,6 +13,7 @@ import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
 import {load} from "ts-dotenv";
 import {fileURLToPath} from "url";
 import * as path from "path";
+import {Emitter} from "./emitter";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -126,11 +127,10 @@ const run = async () => {
         const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
         if (diffHours > 2) {
             console.log("Booking span is more than 2 hours.");
-            //     A,B 2 hours;
             const ourMidDateObj1 = new Date(ourStartDate);
             ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
             const ourMidDate1 = ourMidDateObj1.toISOString();
-            console.log("Booking first 1.5 hours double");
+            console.log("Booking first 2 hours");
             await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1], playerIds[3]]);
 
             const apiHelperTT = new ApiHelper(apiHost, host);
@@ -140,12 +140,11 @@ const run = async () => {
                 return;
             }
             console.log("Logged in with Tomcat");
-            //     C,D rest hours;
-            console.log("Booking rest time double");
-            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]])).result && createBookedLockFile();
+            console.log("Booking rest time");
+            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]]));
         } else if (diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds) && createBookedLockFile();
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds); 
         } else {
             console.log("Booking span less than 2 hours, skip booking today.");
         }
@@ -186,41 +185,41 @@ const bookForSaturdays = async () => {
 
     const courtIds = Object.keys(courtsEvaluator);
     for(const courtId of courtIds) {
-        const bookResult = await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
-
-        if (bookResult.result) {
-            console.log("Book Saturday successfully, try second part booking");
-            createBookedLockFile(`${saturdayString}.lock_Saturday`);
-            const apiHelperTT = new ApiHelper(apiHost, host);
-            const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
-            if (!loginSuccessTT) {
-                console.log("TT login failed, please check username and password.");
-                return;
-            }
-            const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
-            const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
-            await apiHelperTT.bookCourt(courtId, ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
+        await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
+        console.log("Book Saturday successfully, try second part booking");
+        createBookedLockFile(`${saturdayString}.lock_Saturday`);
+        const apiHelperTT = new ApiHelper(apiHost, host);
+        const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
+        if (!loginSuccessTT) {
+            console.log("TT login failed, please check username and password.");
             return;
+        }
+        const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
+        const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
+        await apiHelperTT.bookCourt(courtId, ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
+    }
+};
+// bookForSaturdays().then();
+const runForEveryDay = async ()=> {
+    const existingLockFile = checkLockFileExist();
+    if (!existingLockFile) {
+        return run();
+    } else {
+        // if exists, but not equal as today's, means it's old one, delete it then do the job
+        const todayLockFileName = `${formatDateString(new Date())}.lock`;
+        if (todayLockFileName !== existingLockFile) {
+            console.log("trying to book", todayLockFileName, existingLockFile);
+            // delete lock file
+            fs.unlinkSync(existingLockFile);
+            return run();
+        } else {
+            console.log("same date lock exists, today has been booked");
         }
     }
 };
-
-bookForSaturdays()
-    .then(() => {
-        const existingLockFile = checkLockFileExist();
-        if (!existingLockFile) {
-            return run();
-        } else {
-            // if exists, but not equal as today's, means it's old one, delete it then do the job
-            const todayLockFileName = `${formatDateString(new Date())}.lock`;
-            if (todayLockFileName !== existingLockFile) {
-                console.log("trying to book", todayLockFileName, existingLockFile);
-                fs.unlinkSync(existingLockFile);
-                return run();
-            } else {
-                console.log("same date lock exists, today has been booked");
-            }
-        }
-    }).then(() => console.log("DONE"))
-    .catch(e => console.error(e));
+Emitter.on("BOOKING_RESULT", createBookedLockFile);
+runForEveryDay().finally(() => {
+    Emitter.off("BOOKING_RESULT", createBookedLockFile);
+    console.log("++++++++++++Daily booking end++++++++++");
+});
 

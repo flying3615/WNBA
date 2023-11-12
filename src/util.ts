@@ -1,6 +1,7 @@
 import readline from "readline";
 import fs from "fs";
 import * as events from "events";
+import {Emitter} from "./emitter";
 
 export const courtsEvaluator = {
     "5aadd66e87c6b800048a290e": 2,
@@ -48,7 +49,7 @@ export const isWeekend = (dateObj: Date) => {
     return dayOfWeek === 6 || dayOfWeek === 0;
 };
 
-export const isSuitableTime = (currentSlotTime:string, dateObj:Date) => {
+export const isSuitableTime = (currentSlotTime: string, dateObj: Date) => {
     const hour = parseInt(currentSlotTime.split(":")[0]);
     const minutes = parseInt(currentSlotTime.split(":")[1]);
     if (hour === 23 && minutes === 30) {
@@ -86,7 +87,7 @@ export const readLines = async (filePath: string) => {
 };
 
 export const createBookedLockFile = (lockName?: string) => {
-    const filename = lockName ? `${lockName}`: `${formatDateString(new Date())}.lock`;
+    const filename = lockName ? `${lockName}` : `${formatDateString(new Date())}.lock`;
     fs.writeFile(filename, "", function (err) {
         if (err) {
             console.log(err);
@@ -129,8 +130,7 @@ export const formatDateString = (date: Date) => {
 };
 
 
-
-type DayInWeek = "Sunday"| "Monday"| "Tuesday"| "Wednesday"| "Thursday"| "Friday"| "Saturday"
+type DayInWeek = "Sunday" | "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday"
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 export const getDayOfWeek = (date: Date) => {
@@ -146,4 +146,30 @@ export const getDateFromThisWeekDay = (day: DayInWeek) => {
     const futureDate = new Date();
     futureDate.setDate(today.getDate() + dayDiff);
     return futureDate;
+};
+
+/**
+ * Run callback function intensively until callback return true or forLong time reached
+ * @param callback
+ * @param interval
+ * @param forLong
+ */
+export const intensivelyRun = (callback: () => Promise<boolean>, interval = 30 * 1000, forLong = 1000 * 60 * 10) => {
+    const startTime = new Date();
+    let result = false;
+
+    const task = setInterval(async () => {
+        const now = new Date();
+        if (now.getTime() - startTime.getTime() > forLong) {
+            clearInterval(task);
+            Emitter.emit("BOOKING_RESULT", false);
+            return;
+        }
+        result = await callback();
+        if (result) {
+            clearInterval(task);
+            Emitter.emit("BOOKING_RESULT", true);
+        }
+    }, interval);
+
 };

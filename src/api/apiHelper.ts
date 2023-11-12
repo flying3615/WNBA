@@ -1,4 +1,4 @@
-import {courtsEvaluator} from "../util.js";
+import {courtsEvaluator, intensivelyRun} from "../util.js";
 
 export class ApiHelper {
     private token: string;
@@ -80,27 +80,27 @@ export class ApiHelper {
 
         console.log("booking body: ", body);
 
-        const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
-            "headers": this.headers,
-            "referrer": `https://${this.host}/`,
-            "referrerPolicy": "strict-origin-when-cross-origin",
-            "body": body,
-            "method": "POST",
-            "mode": "cors",
-            "credentials": "include"
+        // every 30 seconds, run for 10 minutes
+        intensivelyRun(async () => {
+            const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
+                "headers": this.headers,
+                "referrer": `https://${this.host}/`,
+                "referrerPolicy": "strict-origin-when-cross-origin",
+                "body": body,
+                "method": "POST",
+                "mode": "cors",
+                "credentials": "include"
+            });
+
+            const bookResultObj = await bookResponse.json();
+            const bookingResult = bookResponse.ok && !!bookResultObj.bookedOn;
+
+            if(bookingResult) {
+                const courtNumber = Math.abs(courtsEvaluator[court]);
+                console.log(`Booking successfully, booked court ${courtNumber} on ${bookResultObj.bookedOn} from ${startTime} to ${endTime}`);
+            }
+            return bookingResult;
         });
-
-        const bookResult = await bookResponse.json();
-
-        const courtNumber = Math.abs(courtsEvaluator[court]);
-        if (bookResponse.ok && !!bookResult.bookedOn) {
-            console.log(`Booking successfully, booked court ${courtNumber} on ${bookResult.bookedOn} from ${startTime} to ${endTime}`);
-            return {result:true};
-        } else {
-            // TODO send email
-            console.log(`Booking Unsuccessfully, failed to booked court ${courtNumber} from ${startTime} to ${endTime} due to ${bookResult.message}`);
-            return {result:false, msg: bookResult.message};
-        }
     }
 
 
