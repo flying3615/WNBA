@@ -80,7 +80,7 @@ export class ApiHelper {
 
         console.log("booking body: ", body);
 
-        // every 30 seconds, run for 10 minutes
+        // every 15 seconds, run for 10 minutes
         intensivelyRun(async () => {
             const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
                 "headers": this.headers,
