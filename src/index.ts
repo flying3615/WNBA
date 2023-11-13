@@ -13,7 +13,7 @@ import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
 import {load} from "ts-dotenv";
 import {fileURLToPath} from "url";
 import * as path from "path";
-import {Emitter} from "./emitter";
+import {Emitter} from "./emitter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

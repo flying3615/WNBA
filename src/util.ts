@@ -1,7 +1,7 @@
 import readline from "readline";
 import fs from "fs";
 import * as events from "events";
-import {Emitter} from "./emitter";
+import {Emitter} from "./emitter.js";
 
 export const courtsEvaluator = {
     "5aadd66e87c6b800048a290e": 2,
