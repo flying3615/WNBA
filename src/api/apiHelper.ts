@@ -78,10 +78,9 @@ export class ApiHelper {
 
         const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":false,"forOthers":false,"reminderTime":30,"sendReminderEmail":false}`;
 
-        console.log("booking body: ", body);
-
         // every 15 seconds, run for 10 minutes
         intensivelyRun(async () => {
+            console.log("booking body: ", body);
             const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
                 "headers": this.headers,
                 "referrer": `https://${this.host}/`,

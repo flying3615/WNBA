@@ -1,7 +1,6 @@
 import readline from "readline";
 import fs from "fs";
 import * as events from "events";
-import {Emitter} from "./emitter.js";
 
 export const courtsEvaluator = {
     "5aadd66e87c6b800048a290e": 2,
@@ -162,13 +161,15 @@ export const intensivelyRun = (callback: () => Promise<boolean>, interval = 15 *
         const now = new Date();
         if (now.getTime() - startTime.getTime() > forLong) {
             clearInterval(task);
-            Emitter.emit("BOOKING_RESULT", false);
+            console.log("++++++++++++Daily booking timeout unsuccessfully++++++++++");
             return;
         }
         result = await callback();
+        console.log("Intensively running book result: ", result);
         if (result) {
             clearInterval(task);
-            Emitter.emit("BOOKING_RESULT", true);
+            console.log("++++++++++++Daily booking successfully++++++++++");
+            createBookedLockFile();
         }
     }, interval);
 

@@ -13,7 +13,6 @@ import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
 import {load} from "ts-dotenv";
 import {fileURLToPath} from "url";
 import * as path from "path";
-import {Emitter} from "./emitter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -70,7 +69,16 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
     const alreadyOccupiedTimesByCourtId =
         await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
 
-    const latestEndingTimePerCourt = alreadyOccupiedTimesByCourtId.map((value) => {
+    //The time shift need to after 13 hours, so have to filter out the booking time endDate is after 11:00:00
+    const afterFilteredOccupiedTimesByCourtId =  alreadyOccupiedTimesByCourtId.map((value) => {
+        const afterFiltered = value.bookingTimes.filter((time) => {
+            return new Date(time.endDate).getTime() <= new Date(`${formatDateString(sevenDayLater)}T11:30:00.000Z`).getTime();
+        });
+        return {courtId: value.courtId, bookingTimes: afterFiltered};
+    });
+
+
+    const latestEndingTimePerCourt = afterFilteredOccupiedTimesByCourtId.map((value) => {
         // find the booking time with the latest end time for a specific court
         const sortedTime = value.bookingTimes.sort((a, b) => {
             return new Date(b.endDate).getTime() - new Date(a.endDate).getTime();
@@ -144,7 +152,7 @@ const run = async () => {
             (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]]));
         } else if (diffHours === 2) {
             console.log("Booking span equals to 2 hours.");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, playerIds); 
+            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1], playerIds[3]]);
         } else {
             console.log("Booking span less than 2 hours, skip booking today.");
         }
@@ -217,9 +225,6 @@ const runForEveryDay = async ()=> {
         }
     }
 };
-Emitter.on("BOOKING_RESULT", createBookedLockFile);
-runForEveryDay().finally(() => {
-    Emitter.off("BOOKING_RESULT", createBookedLockFile);
-    console.log("++++++++++++Daily booking end++++++++++");
-});
+
+runForEveryDay().then();
 
