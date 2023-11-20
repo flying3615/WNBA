@@ -97,6 +97,8 @@ export class ApiHelper {
             if(bookingResult) {
                 const courtNumber = Math.abs(courtsEvaluator[court]);
                 console.log(`Booking successfully, booked court ${courtNumber} on ${bookResultObj.bookedOn} from ${startTime} to ${endTime}`);
+            } else {
+                console.log(JSON.stringify(bookResultObj, null, 2));
             }
             return bookingResult;
         });
