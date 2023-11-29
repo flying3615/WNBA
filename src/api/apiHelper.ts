@@ -78,30 +78,27 @@ export class ApiHelper {
 
         const body = `{"members":[${playerList}],"area":"${court}","activity":"5aadd66e87c6b800048a2908","startDate":"${startTime}","endDate":"${endTime}","mode":"${playMode}","recurrence":null,"visitors":[],"sendConfirmationEmail":false,"forOthers":false,"reminderTime":30,"sendReminderEmail":false}`;
 
-        // every 15 seconds, run for 10 minutes
-        intensivelyRun(async () => {
-            console.log("booking body: ", body);
-            const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
-                "headers": this.headers,
-                "referrer": `https://${this.host}/`,
-                "referrerPolicy": "strict-origin-when-cross-origin",
-                "body": body,
-                "method": "POST",
-                "mode": "cors",
-                "credentials": "include"
-            });
-
-            const bookResultObj = await bookResponse.json();
-            const bookingResult = bookResponse.ok && !!bookResultObj.bookedOn;
-
-            if(bookingResult) {
-                const courtNumber = Math.abs(courtsEvaluator[court]);
-                console.log(`Booking successfully, booked court ${courtNumber} on ${bookResultObj.bookedOn} from ${startTime} to ${endTime}`);
-            } else {
-                console.log(JSON.stringify(bookResultObj, null, 2));
-            }
-            return bookingResult;
+        console.log("booking body: ", body);
+        const bookResponse = await fetch(`https://${this.apiHost}/booking`, {
+            "headers": this.headers,
+            "referrer": `https://${this.host}/`,
+            "referrerPolicy": "strict-origin-when-cross-origin",
+            "body": body,
+            "method": "POST",
+            "mode": "cors",
+            "credentials": "include"
         });
+
+        const bookResultObj = await bookResponse.json();
+        const bookingResult = bookResponse.ok && !!bookResultObj.bookedOn;
+
+        if(bookingResult) {
+            const courtNumber = Math.abs(courtsEvaluator[court]);
+            console.log(`Booking successfully, booked court ${courtNumber} on ${bookResultObj.bookedOn} from ${startTime} to ${endTime}`);
+        } else {
+            console.log(JSON.stringify(bookResultObj, null, 2));
+        }
+        return bookingResult;
     }
 
 

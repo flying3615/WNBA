@@ -6,7 +6,7 @@ import {
     createBookedLockFile,
     formatDateString, getDateFromThisWeekDay,
     getDayOfWeek,
-    getFutureDate
+    getFutureDate, intensivelyRun
 } from "./util.js";
 import {ApiHelper} from "./api/apiHelper.js";
 import {getBookingAndEventTimes} from "./api/bookTimeChecker.js";
@@ -64,13 +64,13 @@ const tomcatName = env.TOMCAT_NAME;
 const tomcatPassword = env.TOMCAT_PASSWORD;
 const token = env.TOKEN;
 
-async function findPlayTimeSpan(apiHelper: ApiHelper) {
+const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
     // find out today already booked time span per courtId
     const alreadyOccupiedTimesByCourtId =
         await getBookingAndEventTimes(formatDateString(sixDayLater), formatDateString(sevenDayLater), apiHelper);
 
     //The time shift need to after 13 hours, so have to filter out the booking time endDate is after 11:00:00
-    const afterFilteredOccupiedTimesByCourtId =  alreadyOccupiedTimesByCourtId.map((value) => {
+    const afterFilteredOccupiedTimesByCourtId = alreadyOccupiedTimesByCourtId.map((value) => {
         const afterFiltered = value.bookingTimes.filter((time) => {
             return new Date(time.endDate).getTime() <= new Date(`${formatDateString(sevenDayLater)}T11:30:00.000Z`).getTime();
         });
@@ -101,13 +101,51 @@ async function findPlayTimeSpan(apiHelper: ApiHelper) {
 
     const ourStartDate = earliestEndTimePerCourt.latestEndTime;
     const ourCourtId = earliestEndTimePerCourt.courtId;
-    // hardcoded ending time
-    const ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
+
+    // Check start hour + 4 hours if is later than 11:00:00
+    const endDateAfterFourHours = new Date(ourStartDate);
+    endDateAfterFourHours.setHours(endDateAfterFourHours.getHours() + 4);
+
+    let ourEndDate: string;
+    if (endDateAfterFourHours.getTime() > new Date(`${formatDateString(sevenDayLater)}T11:00:00.000Z`).getTime()) {
+        ourEndDate = `${formatDateString(sevenDayLater)}T11:00:00.000Z`;
+    } else {
+        ourEndDate = endDateAfterFourHours.toISOString();
+    }
 
     const timeDiff = new Date(ourEndDate).getTime() - new Date(ourStartDate).getTime();
     const diffHours = timeDiff / (1000 * 3600);
     return {ourStartDate, ourCourtId, ourEndDate, diffHours};
-}
+};
+
+const runBooking = async (apiHelperKK: ApiHelper) => {
+    const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
+    if (diffHours > 2) {
+        console.log("Booking span is more than 2 hours.");
+        const ourMidDateObj1 = new Date(ourStartDate);
+        ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
+        const ourMidDate1 = ourMidDateObj1.toISOString();
+        console.log("Booking first 2 hours");
+        await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1], playerIds[3]]);
+
+        const apiHelperTT = new ApiHelper(apiHost, host);
+        const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
+        if (!loginSuccess) {
+            console.log("TT login failed, please check username and password.");
+            return;
+        }
+        console.log("Logged in with Tomcat");
+        console.log("Booking rest time");
+        return (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]]));
+
+    } else if (diffHours === 2) {
+        console.log("Booking span equals to 2 hours.");
+        return await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1], playerIds[3]]);
+    } else {
+        console.log("Booking span less than 2 hours, skip booking today.");
+        return true;
+    }
+};
 
 const run = async () => {
 
@@ -132,29 +170,16 @@ const run = async () => {
     }
 
     try {
-        const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
-        if (diffHours > 2) {
-            console.log("Booking span is more than 2 hours.");
-            const ourMidDateObj1 = new Date(ourStartDate);
-            ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
-            const ourMidDate1 = ourMidDateObj1.toISOString();
-            console.log("Booking first 2 hours");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [playerIds[0], playerIds[1], playerIds[3]]);
-
-            const apiHelperTT = new ApiHelper(apiHost, host);
-            const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
-            if (!loginSuccess) {
-                console.log("TT login failed, please check username and password.");
-                return;
-            }
-            console.log("Logged in with Tomcat");
-            console.log("Booking rest time");
-            (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [playerIds[2], playerIds[4]]));
-        } else if (diffHours === 2) {
-            console.log("Booking span equals to 2 hours.");
-            await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, [playerIds[0], playerIds[1], playerIds[3]]);
+        const firstRunResult = await runBooking(apiHelperKK);
+        if (firstRunResult) {
+            createBookedLockFile();
         } else {
-            console.log("Booking span less than 2 hours, skip booking today.");
+            intensivelyRun(async () => {
+                if (await runBooking(apiHelperKK)) {
+                    createBookedLockFile();
+                    return true;
+                }
+            });
         }
     } catch (e) {
         console.error(e);
@@ -162,11 +187,11 @@ const run = async () => {
 };
 
 const bookForSaturdays = async () => {
-    if(dayOfWeek == "Saturday") {
+    if (dayOfWeek == "Saturday") {
         console.log("Today is Saturday, skip Saturday checking book....");
         return;
     }
-    
+
     console.log("-----Try to book on this Saturday--------");
     const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
     const saturdayString = formatDateString(thisSaturdayDate);
@@ -192,7 +217,7 @@ const bookForSaturdays = async () => {
     const ourEndDateTime1 = `${saturdayString}T09:30:00.000Z`;
 
     const courtIds = Object.keys(courtsEvaluator);
-    for(const courtId of courtIds) {
+    for (const courtId of courtIds) {
         await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
         console.log("Book Saturday successfully, try second part booking");
         createBookedLockFile(`${saturdayString}.lock_Saturday`);
@@ -208,7 +233,7 @@ const bookForSaturdays = async () => {
     }
 };
 // bookForSaturdays().then();
-const runForEveryDay = async ()=> {
+const runForEveryDay = async () => {
     const existingLockFile = checkLockFileExist();
     if (!existingLockFile) {
         return run();
