@@ -153,7 +153,7 @@ export const getDateFromThisWeekDay = (day: DayInWeek) => {
  * @param interval
  * @param forLong
  */
-export const intensivelyRun = (callback: () => Promise<boolean>, interval = 15 * 1000, forLong = 1000 * 60 * 10) => {
+export const intensivelyRun = (callback: () => Promise<boolean>, interval = 10 * 1000, forLong = 1000 * 60 * 5) => {
     const startTime = new Date();
     let result = false;
 
