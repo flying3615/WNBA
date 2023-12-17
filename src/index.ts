@@ -99,7 +99,13 @@ const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
         return new Date(a.latestEndTime).getTime() - new Date(b.latestEndTime).getTime() || courtBWeight - courtAWeight;
     })[0];
 
-    const ourStartDate = earliestEndTimePerCourt.latestEndTime;
+    let ourStartDate = earliestEndTimePerCourt.latestEndTime;
+    // check if it's Sunday, the start time should be from 8:00:00
+    if (dayOfWeek == "Sunday") {
+        console.log("On Sunday, start booking from 8 pm");
+        ourStartDate = `${formatDateString(sevenDayLater)}T07:00:00.000Z`;
+    }
+
     const ourCourtId = earliestEndTimePerCourt.courtId;
 
     // Check start hour + 4 hours if is later than 11:00:00
