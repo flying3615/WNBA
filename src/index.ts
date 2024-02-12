@@ -30,6 +30,10 @@ const env = load({
     KAFKA_PASSWORD: String,
     TOMCAT_NAME: String,
     TOMCAT_PASSWORD: String,
+
+    JANE_YANG_NAME:String,
+    JANE_YANG_PASSWORD:String,
+
 }, {
     path: resolve(__dirname, ".env"),
 });
@@ -46,9 +50,9 @@ console.log = function (data, data2) {
 enum bookingTime {
     Tuesday,
     Wednesday,
-    Thursday,
+    // Thursday,
     // Friday,
-    Saturday,
+    // Saturday,
     Sunday,
 }
 
@@ -58,10 +62,16 @@ const dayOfWeek = getDayOfWeek(sevenDayLater);
 const playerIds = env.PLAYER_IDS.split(",");
 const apiHost = env.API_HOSTNAME;
 const host = env.HOSTNAME;
+
 const kafkaName = env.KAFKA_NAME;
 const kafkaPassword = env.KAFKA_PASSWORD;
+
 const tomcatName = env.TOMCAT_NAME;
 const tomcatPassword = env.TOMCAT_PASSWORD;
+
+const janeName = env.JANE_YANG_NAME;
+const janePassword = env.JANE_YANG_PASSWORD;
+
 const token = env.TOKEN;
 
 const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
@@ -102,8 +112,11 @@ const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
     let ourStartDate = earliestEndTimePerCourt.latestEndTime;
     // check if it's Sunday, the start time should be from 8:00:00
     if (dayOfWeek == "Sunday") {
-        console.log("On Sunday, start booking from 8 pm");
-        ourStartDate = `${formatDateString(sevenDayLater)}T07:00:00.000Z`;
+        // check if ourStartDate is earlier than 7:30 pm
+        if(new Date(ourStartDate).getTime() < new Date(`${formatDateString(sevenDayLater)}T06:30:00.000Z`).getTime()) {
+            console.log("On Sunday, start booking from 7:30 pm");
+            ourStartDate = `${formatDateString(sevenDayLater)}T06:30:00.000Z`;
+        }
     }
 
     const ourCourtId = earliestEndTimePerCourt.courtId;
@@ -124,14 +137,25 @@ const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
     return {ourStartDate, ourCourtId, ourEndDate, diffHours};
 };
 
-const runBooking = async (apiHelperKK: ApiHelper) => {
-    const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelperKK);
+const runBooking = async (apiHelper: ApiHelper, bookForJane = false) => {
+    const {ourStartDate, ourCourtId, ourEndDate, diffHours} = await findPlayTimeSpan(apiHelper);
 
     const Ivan = playerIds[0];
     const Gabriel = playerIds[1];
     const Jianwei = playerIds[2];
     const Angelia =  playerIds[3];
     const Hazel = playerIds[4];
+
+    const Jane = playerIds[5];
+    const Angela = playerIds[6];
+
+    // run booking for Jane
+    if(bookForJane) {
+        const ourMidDateObj1 = new Date(ourStartDate);
+        ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
+        const ourEndDate = ourMidDateObj1.toISOString();
+        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Jane, Angela]);
+    }
     
     if (diffHours > 2) {
         console.log("Booking span is more than 2 hours.");
@@ -139,7 +163,7 @@ const runBooking = async (apiHelperKK: ApiHelper) => {
         ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
         const ourMidDate1 = ourMidDateObj1.toISOString();
         console.log("Booking first 2 hours");
-        await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [Ivan, Gabriel]);
+        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [Ivan, Gabriel]);
 
         const apiHelperTT = new ApiHelper(apiHost, host);
         const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
@@ -153,7 +177,7 @@ const runBooking = async (apiHelperKK: ApiHelper) => {
 
     } else if (diffHours === 2) {
         console.log("Booking span equals to 2 hours.");
-        return await apiHelperKK.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Ivan, Gabriel]);
+        return await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Ivan, Gabriel]);
     } else {
         console.log("Booking span less than 2 hours, skip booking today.");
         return true;
@@ -182,6 +206,7 @@ const run = async () => {
         console.log("Use token to login.", token);
     }
 
+    // Run for KK
     try {
         const firstRunResult = await runBooking(apiHelperKK);
         if (firstRunResult) {
@@ -196,6 +221,18 @@ const run = async () => {
         }
     } catch (e) {
         console.error(e);
+    }
+
+//     Run for Jane Yang
+    if (dayOfWeek == "Sunday") {
+        try {
+            console.log("Logged in with Jane");
+            const apiHelperJane = new ApiHelper(apiHost, host);
+            await apiHelperJane.login(janeName, janePassword);
+            await runBooking(apiHelperJane, true);
+        } catch (e) {
+            console.error(e);
+        }
     }
 };
 
