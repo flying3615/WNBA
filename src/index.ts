@@ -224,7 +224,7 @@ const run = async () => {
     }
 
 //     Run for Jane Yang
-    if (dayOfWeek == "Sunday") {
+//     if (dayOfWeek == "Sunday") {
         try {
             console.log("Logged in with Jane");
             const apiHelperJane = new ApiHelper(apiHost, host);
@@ -233,7 +233,7 @@ const run = async () => {
         } catch (e) {
             console.error(e);
         }
-    }
+    // }
 };
 
 const bookForSaturdays = async () => {
