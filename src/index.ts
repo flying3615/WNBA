@@ -225,14 +225,14 @@ const run = async () => {
 
 //     Run for Jane Yang
 //     if (dayOfWeek == "Sunday") {
-        try {
-            console.log("Logged in with Jane");
-            const apiHelperJane = new ApiHelper(apiHost, host);
-            await apiHelperJane.login(janeName, janePassword);
-            await runBooking(apiHelperJane, true);
-        } catch (e) {
-            console.error(e);
-        }
+//         try {
+//             console.log("Logged in with Jane");
+//             const apiHelperJane = new ApiHelper(apiHost, host);
+//             await apiHelperJane.login(janeName, janePassword);
+//             await runBooking(apiHelperJane, true);
+//         } catch (e) {
+//             console.error(e);
+//         }
     // }
 };
 
