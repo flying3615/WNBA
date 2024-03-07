@@ -48,11 +48,11 @@ console.log = function (data, data2) {
 
 
 enum bookingTime {
-    Tuesday,
-    Wednesday,
-    Thursday,
-    Friday,
-    Saturday,
+    // Tuesday,
+    // Wednesday,
+    // Thursday,
+    // Friday,
+    // Saturday,
     Sunday,
 }
 
