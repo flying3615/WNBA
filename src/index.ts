@@ -157,27 +157,25 @@ const runBooking = async (apiHelper: ApiHelper, bookForJane = false) => {
         await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Jane, Angela]);
     }
     
-    if (diffHours > 2) {
+    if (diffHours >= 2) {
         console.log("Booking span is more than 2 hours.");
         const ourMidDateObj1 = new Date(ourStartDate);
         ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
         const ourMidDate1 = ourMidDateObj1.toISOString();
         console.log("Booking first 2 hours");
-        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [Ivan, Gabriel]);
+        return await apiHelper.bookCourt(ourCourtId, ourStartDate, ourMidDate1, [Ivan, Hazel]);
 
-        const apiHelperTT = new ApiHelper(apiHost, host);
-        const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
-        if (!loginSuccess) {
-            console.log("TT login failed, please check username and password.");
-            return;
-        }
-        console.log("Logged in with Tomcat");
-        console.log("Booking rest time");
-        return (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [Jianwei, Hazel]));
 
-    } else if (diffHours === 2) {
-        console.log("Booking span equals to 2 hours.");
-        return await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Ivan, Gabriel]);
+        // const apiHelperTT = new ApiHelper(apiHost, host);
+        // const loginSuccess = await apiHelperTT.login(tomcatName, tomcatPassword);
+        // if (!loginSuccess) {
+        //     console.log("TT login failed, please check username and password.");
+        //     return;
+        // }
+        // console.log("Logged in with Tomcat");
+        // console.log("Booking rest time");
+        // return (await apiHelperTT.bookCourt(ourCourtId, ourMidDate1, ourEndDate, [Jianwei, Hazel]));
+
     } else {
         console.log("Booking span less than 2 hours, skip booking today.");
         return true;
