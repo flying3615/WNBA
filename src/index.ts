@@ -69,9 +69,6 @@ const kafkaPassword = env.KAFKA_PASSWORD;
 const tomcatName = env.TOMCAT_NAME;
 const tomcatPassword = env.TOMCAT_PASSWORD;
 
-const janeName = env.JANE_YANG_NAME;
-const janePassword = env.JANE_YANG_PASSWORD;
-
 const token = env.TOKEN;
 
 const findPlayTimeSpan = async (apiHelper: ApiHelper) => {
@@ -145,17 +142,8 @@ const runBooking = async (apiHelper: ApiHelper, bookForJane = false) => {
     const Jianwei = playerIds[2];
     const Angelia =  playerIds[3];
     const Hazel = playerIds[4];
-
     const Jane = playerIds[5];
     const Angela = playerIds[6];
-
-    // run booking for Jane
-    if(bookForJane) {
-        const ourMidDateObj1 = new Date(ourStartDate);
-        ourMidDateObj1.setHours(ourMidDateObj1.getHours() + 2);
-        const ourEndDate = ourMidDateObj1.toISOString();
-        await apiHelper.bookCourt(ourCourtId, ourStartDate, ourEndDate, [Jane, Angela]);
-    }
     
     if (diffHours >= 2) {
         console.log("Booking span is more than 2 hours.");
@@ -220,67 +208,8 @@ const run = async () => {
     } catch (e) {
         console.error(e);
     }
-
-//     Run for Jane Yang
-//     if (dayOfWeek == "Sunday") {
-//         try {
-//             console.log("Logged in with Jane");
-//             const apiHelperJane = new ApiHelper(apiHost, host);
-//             await apiHelperJane.login(janeName, janePassword);
-//             await runBooking(apiHelperJane, true);
-//         } catch (e) {
-//             console.error(e);
-//         }
-    // }
 };
 
-const bookForSaturdays = async () => {
-    if (dayOfWeek == "Saturday") {
-        console.log("Today is Saturday, skip Saturday checking book....");
-        return;
-    }
-
-    console.log("-----Try to book on this Saturday--------");
-    const thisSaturdayDate = getDateFromThisWeekDay("Saturday");
-    const saturdayString = formatDateString(thisSaturdayDate);
-
-    const existingLockSaturdayFile = checkLockFileExist("lock_Saturday");
-    if (existingLockSaturdayFile) {
-        if (existingLockSaturdayFile.includes(saturdayString)) {
-            console.log("Saturday lock exists");
-            return;
-        } else {
-            console.log("Saturday lock exists, but not for this week, remove it....");
-            fs.unlinkSync(existingLockSaturdayFile);
-        }
-    }
-
-    const apiHelperKK = new ApiHelper(apiHost, host);
-    const loginSuccessKK = await apiHelperKK.login(kafkaName, kafkaPassword);
-    if (!loginSuccessKK) {
-        console.log("KK login failed, please check username and password.");
-        return;
-    }
-    const ourStartDateTime1 = `${saturdayString}T07:30:00.000Z`;
-    const ourEndDateTime1 = `${saturdayString}T09:30:00.000Z`;
-
-    const courtIds = Object.keys(courtsEvaluator);
-    for (const courtId of courtIds) {
-        await apiHelperKK.bookCourt(courtId, ourStartDateTime1, ourEndDateTime1, [playerIds[0], playerIds[1]]);
-        console.log("Book Saturday successfully, try second part booking");
-        createBookedLockFile(`${saturdayString}.lock_Saturday`);
-        const apiHelperTT = new ApiHelper(apiHost, host);
-        const loginSuccessTT = await apiHelperTT.login(tomcatName, tomcatPassword);
-        if (!loginSuccessTT) {
-            console.log("TT login failed, please check username and password.");
-            return;
-        }
-        const ourStartDateTime2 = `${saturdayString}T09:30:00.000Z`;
-        const ourEndDateTime2 = `${saturdayString}T11:00:00.000Z`;
-        await apiHelperTT.bookCourt(courtId, ourStartDateTime2, ourEndDateTime2, [playerIds[2], playerIds[3]]);
-    }
-};
-// bookForSaturdays().then();
 const runForEveryDay = async () => {
     const existingLockFile = checkLockFileExist();
     if (!existingLockFile) {

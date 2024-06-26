@@ -1,0 +1,13 @@
+version: '3'
+services:
+  wnba:
+    image: 'wnba-image:latest'
+    environment:
+      - TZ=${TZ}
+      - PLAYER_IDS=${PLAYER_IDS}
+      - HOSTNAME=${HOSTNAME}
+      - API_HOSTNAME=${API_HOSTNAME}
+      - KAFKA_NAME=${KAFKA_NAME}
+      - KAFKA_PASSWORD=${KAFKA_PASSWORD}
+      - TOMCAT_NAME=${TOMCAT_NAME}
+      - TOMCAT_PASSWORD=${TOMCAT_PASSWORD}

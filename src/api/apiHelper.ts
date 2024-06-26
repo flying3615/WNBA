@@ -1,4 +1,4 @@
-import {courtsEvaluator, intensivelyRun} from "../util.js";
+import {courtsEvaluator} from "../util.js";
 
 export class ApiHelper {
     private token: string;
@@ -7,6 +7,8 @@ export class ApiHelper {
     private headers: any;
 
     constructor(apiHost: string, host: string, token?: string) {
+        // ignore tls checking
+        process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
         this.apiHost = apiHost;
         this.host = host;
         this.token = token;
