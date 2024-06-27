@@ -31,6 +31,9 @@ RUN npm install
 # Compile TypeScript to JavaScript
 RUN npx tsc
 
+# Copy the env file
+COPY ./.env ./build/.env
+
 # Add execute permission
 RUN chmod +x start.sh
 

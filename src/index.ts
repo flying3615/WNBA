@@ -22,7 +22,6 @@ const env = load({
         type: String,
         optional: true,
     },
-    USE_TOKEN: Boolean,
     PLAYER_IDS: String,
     HOSTNAME: String,
     API_HOSTNAME: String,
@@ -30,10 +29,6 @@ const env = load({
     KAFKA_PASSWORD: String,
     TOMCAT_NAME: String,
     TOMCAT_PASSWORD: String,
-
-    JANE_YANG_NAME:String,
-    JANE_YANG_PASSWORD:String,
-
 }, {
     path: resolve(__dirname, ".env"),
 });
