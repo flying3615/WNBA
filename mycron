@@ -1,2 +1,2 @@
-*/5 * * * * /usr/local/bin/node /usr/src/app/build/index.js >> /var/log/cron.log 2>&1
+0 7 * * * /usr/local/bin/node /usr/src/app/build/index.js >> /var/log/cron.log 2>&1
 
